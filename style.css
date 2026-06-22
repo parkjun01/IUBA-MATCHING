@@ -135,10 +135,16 @@ body {
 .btn-secondary:hover { background: var(--bg); }
 .btn-danger-soft { background: #fee2e2; color: var(--danger); border: none; }
 .btn-sm { padding: 6px 14px; font-size: 0.82rem; border-radius: 8px; }
+.home-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 0;
+}
 .btn-start {
   width: 100%;
-  padding: 18px;
-  font-size: 1.15rem;
+  padding: 18px 12px;
+  font-size: 1rem;
   border-radius: 18px;
   background: linear-gradient(135deg, var(--primary), #7c3aed);
   color: #fff;
@@ -152,6 +158,23 @@ body {
 }
 .btn-start:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(79,70,229,.4); }
 .btn-start:active { transform: scale(.97); }
+.btn-manual {
+  width: 100%;
+  padding: 18px 12px;
+  font-size: 1rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  letter-spacing: .5px;
+  box-shadow: 0 6px 24px rgba(14,165,233,.35);
+  transition: all .15s;
+}
+.btn-manual:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(14,165,233,.4); }
+.btn-manual:active { transform: scale(.97); }
 
 /* ── 페이지 헤더 ── */
 .page-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; }
