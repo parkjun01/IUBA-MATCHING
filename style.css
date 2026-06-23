@@ -409,7 +409,15 @@ body {
   box-shadow: var(--shadow);
   border-left: 4px solid var(--primary);
 }
-.result-team-no { font-weight: 800; font-size: 1rem; color: var(--primary); margin-bottom: 10px; }
+.result-team-no { font-weight: 800; font-size: 1rem; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.team-badge { font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.badge-fixed  { background: #ede9fe; color: #6d28d9; }
+.badge-random { background: #e0f2fe; color: #0369a1; }
+.result-divider {
+  text-align: center; font-size: .78rem; font-weight: 700;
+  color: var(--muted); padding: 8px 0 4px;
+  border-top: 1.5px dashed var(--border); margin-top: 4px;
+}
 .result-members { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
 .result-member { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
 .result-venue {
@@ -447,6 +455,7 @@ body {
   padding: 14px; margin-bottom: 16px; box-shadow: var(--shadow);
 }
 .manual-section-title { font-size: .78rem; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+.manual-pool-hint { font-weight: 500; color: var(--primary); margin-left: 4px; }
 .name-chip-group { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
 .manual-teams { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
 .manual-team-card {

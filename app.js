@@ -391,8 +391,9 @@ function assignVenues(teams, venues) {
 // ============================================================
 // 애니메이션
 // ============================================================
-let matchResult = [];
-let aniTeams    = [];
+let matchResult     = [];
+let _manualCount    = 0; // 직접 배정된 팀 수
+let aniTeams        = [];
 let aniIndex    = 0;
 let aniCancelled = false;
 
@@ -405,8 +406,9 @@ function startAnimation() {
   catch (e) { toast(e.message); return; }
 
   const result = assignVenues(teams, db.venues);
-  matchResult = result;
-  aniTeams    = result;
+  _manualCount = 0;
+  matchResult  = result;
+  aniTeams     = result;
   aniIndex    = 0;
   aniCancelled = false;
 
@@ -555,6 +557,7 @@ function showResults() {
 }
 
 function renderResults() {
+  const hasRandom = _manualCount > 0 && matchResult.length > _manualCount;
   document.getElementById('results-list').innerHTML = matchResult.map(({ members, venue }, i) => {
     const membersHTML = members.map(m =>
       `<div class="result-member"><strong>${esc(m.name)}</strong></div>`
@@ -569,9 +572,17 @@ function renderResults() {
            📍 <span class="venue-unset">장소 선택 →</span>
          </button>`;
 
+    const divider = (hasRandom && i === _manualCount)
+      ? `<div class="result-divider">🎰 랜덤 배정</div>` : '';
+
+    const badge = hasRandom
+      ? (i < _manualCount ? '<span class="team-badge badge-fixed">직접</span>' : '<span class="team-badge badge-random">랜덤</span>')
+      : '';
+
     return `
+      ${divider}
       <div class="result-card">
-        <div class="result-team-no">팀 ${i + 1}</div>
+        <div class="result-team-no">팀 ${i + 1} ${badge}</div>
         <div class="result-members">${membersHTML}</div>
         ${venueHTML}
       </div>`;
@@ -620,6 +631,8 @@ let manualTeams = [];
 let _memberPick_cb = null;
 
 function openManualMode() {
+  const pool = getPool();
+  if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
   manualTeams = [{ members: [], venue: null }];
   showPage('page-manual');
 }
@@ -698,14 +711,35 @@ function pickManualVenue(teamIdx) {
 }
 
 function finalizeManual() {
-  for (let i = 0; i < manualTeams.length; i++) {
-    if (manualTeams[i].members.length === 0) { toast(`팀 ${i + 1}에 멤버가 없습니다.`); return; }
-  }
+  // 빈 팀 슬롯 제거
+  const fixedTeams = manualTeams.filter(t => t.members.length > 0);
+
+  // 미배정 인원 추출
   const pool = getPool();
-  const assigned = new Set(manualTeams.flatMap(t => t.members.map(m => m.id)));
-  const left = pool.filter(m => !assigned.has(m.id));
-  if (left.length > 0) { toast(`${left.map(m => m.name).join(', ')}이(가) 미배정입니다.`); return; }
-  matchResult = manualTeams.map(t => ({ members: t.members, venue: t.venue }));
+  const assigned = new Set(fixedTeams.flatMap(t => t.members.map(m => m.id)));
+  const remaining = pool.filter(m => !assigned.has(m.id));
+
+  // 미배정 1명이면 어느 팀에도 넣을 수 없으므로 막기
+  if (remaining.length === 1) {
+    toast('나머지 1명은 팀을 구성할 수 없습니다. 기존 팀에 추가해주세요.');
+    return;
+  }
+
+  // 미배정 인원 랜덤 배정
+  let randomResults = [];
+  if (remaining.length >= 2) {
+    try {
+      const teams = generateTeams(remaining);
+      randomResults = assignVenues(teams, db.venues);
+    } catch(e) { toast(e.message); return; }
+  }
+
+  // 직접 배정 팀 + 랜덤 팀 합산
+  _manualCount = fixedTeams.length;
+  matchResult = [
+    ...fixedTeams.map(t => ({ members: t.members, venue: t.venue })),
+    ...randomResults,
+  ];
   showResults();
 }
 
