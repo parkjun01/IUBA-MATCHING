@@ -844,9 +844,10 @@ function showResults() {
 function renderResults() {
   const hasRandom = _manualCount > 0 && matchResult.length > _manualCount;
   document.getElementById('results-list').innerHTML = matchResult.map(({ members, venue }, i) => {
-    const membersHTML = members.map(m =>
-      `<div class="result-member"><strong>${esc(m.name)}</strong></div>`
-    ).join('');
+    const membersHTML = members.map(m => {
+      const icon = m.gender === 'male' ? '👦' : '👧';
+      return `<div class="result-member">${icon} <strong>${esc(m.name)}</strong></div>`;
+    }).join('');
     const venueHTML = venue
       ? `<button class="result-venue result-venue-btn" onclick="pickResultVenue(${i})">
            📍 <strong>${esc(venue.name)}</strong>${venue.requiresCar ? ' 🚗' : ''}
