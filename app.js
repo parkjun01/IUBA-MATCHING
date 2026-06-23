@@ -525,8 +525,37 @@ let _aniOffset   = 0;
 let aniTeams     = [];
 let aniIndex     = 0;
 let aniCancelled = false;
-const REEL_ITEM_H = 56;
-const REEL_WIN_H  = 56;
+const REEL_ITEM_H = 88;
+const REEL_WIN_H  = 88;
+
+// 릴 정지 시 미니 파티클 버스트
+function miniConfettiBurst(el) {
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+  const colors = ['#a78bfa','#60a5fa','#f472b6','#fbbf24','#34d399','#fff'];
+  for (let i = 0; i < 16; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'confetti-dot';
+    const angle = (i / 16) * Math.PI * 2 + Math.random() * .3;
+    const dist  = 45 + Math.random() * 75;
+    const size  = 5 + Math.random() * 7;
+    dot.style.cssText = [
+      `left:${cx}px`,`top:${cy}px`,`width:${size}px`,`height:${size}px`,
+      `background:${colors[i % colors.length]}`,
+      `--dx:${Math.cos(angle)*dist}px`,`--dy:${Math.sin(angle)*dist}px`,
+      `animation:confettiFly .65s ease-out both`
+    ].join(';');
+    document.body.appendChild(dot);
+    setTimeout(() => dot.remove(), 700);
+  }
+}
+// 팀 카드 등장 직전 화면 플래시
+function flashScreen() {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:998;pointer-events:none;animation:screenFlash .5s ease-out both';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 550);
+}
 function startAnimation() {
   const pool = getPool();
   if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
@@ -674,13 +703,22 @@ function animateNext() {
   if (aniIndex === 0) startBgm();
   const { members: team, venue } = aniTeams[aniIndex];
   const teamNo = aniIndex + 1 + _aniOffset;
-  document.getElementById('matching-title').textContent = `팀 ${teamNo} 뽑는 중...`;
+  const titleEl = document.getElementById('matching-title');
+  titleEl.classList.remove('title-pop');
+  void titleEl.offsetWidth;
+  titleEl.textContent = `🎯 팀 ${teamNo}`;
+  titleEl.classList.add('title-pop');
+  titleEl.addEventListener('animationend', () => titleEl.classList.remove('title-pop'), { once: true });
   const allNames = getPool().map(m => m.name);
   buildSlotUI(team, allNames, () => {
     if (aniCancelled) { stopBgm(); return; }
-    revealTeam({ members: team, venue }, teamNo);
-    aniIndex++;
-    setTimeout(animateNext, 1400);
+    flashScreen();
+    setTimeout(() => {
+      if (aniCancelled) return;
+      revealTeam({ members: team, venue }, teamNo);
+      aniIndex++;
+      setTimeout(animateNext, 1600);
+    }, 180);
   });
 }
 function buildSlotUI(team, allNames, onDone) {
@@ -768,6 +806,7 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
       reel.style.transform = `translateY(${finalY}px)`;
       reel.style.filter    = 'none';
       playThud();
+      miniConfettiBurst(win);
       win.classList.add('slot-win-pop');
       win.classList.add(gender === 'male' ? 'slot-glow-m' : 'slot-glow-f');
       setTimeout(() => win.classList.remove('slot-win-pop'), 500);
