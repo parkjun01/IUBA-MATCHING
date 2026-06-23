@@ -548,22 +548,68 @@ function playFanfare() {
     osc1.stop(now + 1.5); osc2.stop(now + 1.5);
   } catch(e) {}
 }
+// BGM: 스핀 중 저음 분위기음 (참고앱 startBgm/stopBgm 방식)
+let _bgmOsc = null, _bgmGain = null, _bgmLfo = null, _bgmPlaying = false;
+function startBgm() {
+  if (_bgmPlaying) return;
+  try {
+    const ac = _ac(); if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    _bgmOsc  = ac.createOscillator();
+    _bgmGain = ac.createGain();
+    _bgmLfo  = ac.createOscillator();
+    const lfoGain = ac.createGain();
+    const filter  = ac.createBiquadFilter();
+    _bgmOsc.type = 'sawtooth';
+    _bgmOsc.frequency.setValueAtTime(55, ac.currentTime);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, ac.currentTime);
+    _bgmLfo.type = 'sine';
+    _bgmLfo.frequency.setValueAtTime(0.5, ac.currentTime);
+    lfoGain.gain.setValueAtTime(300, ac.currentTime);
+    _bgmLfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+    _bgmGain.gain.setValueAtTime(0, ac.currentTime);
+    _bgmGain.gain.linearRampToValueAtTime(0.12, ac.currentTime + 0.8);
+    _bgmOsc.connect(filter);
+    filter.connect(_bgmGain);
+    _bgmGain.connect(ac.destination);
+    _bgmOsc.start(); _bgmLfo.start();
+    _bgmPlaying = true;
+  } catch(e) {}
+}
+function stopBgm() {
+  if (!_bgmPlaying || !_bgmGain) return;
+  try {
+    const ac = _ac(); if (!ac) return;
+    const now = ac.currentTime;
+    _bgmGain.gain.cancelScheduledValues(now);
+    _bgmGain.gain.setValueAtTime(_bgmGain.gain.value, now);
+    _bgmGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    const osc = _bgmOsc, lfo = _bgmLfo, g = _bgmGain;
+    setTimeout(() => { try { osc.stop(); lfo.stop(); osc.disconnect(); g.disconnect(); } catch(e) {} }, 900);
+    _bgmOsc = null; _bgmLfo = null; _bgmGain = null;
+  } catch(e) {}
+  _bgmPlaying = false;
+}
 function animateNext() {
-  if (aniCancelled) return;
+  if (aniCancelled) { stopBgm(); return; }
   if (aniIndex >= aniTeams.length) {
     document.getElementById('matching-title').textContent = '💞 매칭 완료!';
     document.getElementById('slot-area').innerHTML = '';
+    stopBgm();
     playFanfare();
     launchConfetti();
     setTimeout(() => { if (!aniCancelled) showResults(); }, 2000);
     return;
   }
+  if (aniIndex === 0) startBgm();
   const { members: team, venue } = aniTeams[aniIndex];
   const teamNo = aniIndex + 1 + _aniOffset;
   document.getElementById('matching-title').textContent = `팀 ${teamNo} 뽑는 중...`;
   const allNames = getPool().map(m => m.name);
   buildSlotUI(team, allNames, () => {
-    if (aniCancelled) return;
+    if (aniCancelled) { stopBgm(); return; }
     revealTeam({ members: team, venue }, teamNo);
     aniIndex++;
     setTimeout(animateNext, 1400);
