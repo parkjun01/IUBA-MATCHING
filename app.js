@@ -361,6 +361,7 @@ function generateTeamsWithConfig(members, twos, threes) {
 }
 
 function selectSizeConfig(twos, threes) {
+  _initAC();
   const pool = getPool();
   const teams = generateTeamsWithConfig(pool, twos, threes);
   if (!teams) { toast('유효한 팀을 구성할 수 없습니다. 성별 구성을 확인해주세요.'); return; }
@@ -471,52 +472,70 @@ function startAnimation() {
 }
 // ── 효과음 (Web Audio API) ──
 let _audioCtx = null;
-function _getAC() {
-  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return _audioCtx;
+function _initAC() {
+  if (_audioCtx) { if (_audioCtx.state === 'suspended') _audioCtx.resume(); return; }
+  try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
 }
-function playTick() {
+function _ac() { return _audioCtx; }
+
+// 릴 스핀 틱: speed(0~1), 빠를수록 음 높고 짧음
+function playTick(speed) {
   try {
-    const ac = _getAC();
-    const osc = ac.createOscillator();
-    const gain = ac.createGain();
+    const ac = _ac(); if (!ac) return;
+    const osc = ac.createOscillator(), gain = ac.createGain();
     osc.connect(gain); gain.connect(ac.destination);
-    osc.type = 'sine';
-    osc.frequency.value = 600 + Math.random() * 300;
-    gain.gain.setValueAtTime(0.09, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.055);
-    osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.055);
+    osc.type = 'square';
+    osc.frequency.value = 200 + speed * 250;
+    const dur = 0.025 + (1 - speed) * 0.03;
+    gain.gain.setValueAtTime(0.05 + speed * 0.04, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+    osc.start(ac.currentTime); osc.stop(ac.currentTime + dur);
   } catch(e) {}
 }
+// 릴 멈춤 쿵: 피치 드롭
+function playThud() {
+  try {
+    const ac = _ac(); if (!ac) return;
+    const osc = ac.createOscillator(), gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(160, ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(55, ac.currentTime + 0.14);
+    gain.gain.setValueAtTime(0.22, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.18);
+    osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.18);
+  } catch(e) {}
+}
+// 팀 카드 등장: 밝은 상행 3음
 function playReveal() {
   try {
-    const ac = _getAC();
-    [0, 0.08, 0.16].forEach((t, i) => {
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
+    const ac = _ac(); if (!ac) return;
+    [[0, 784], [0.09, 988], [0.18, 1175]].forEach(([t, freq]) => {
+      const osc = ac.createOscillator(), gain = ac.createGain();
       osc.connect(gain); gain.connect(ac.destination);
       osc.type = 'sine';
-      osc.frequency.value = [523, 659, 784][i];
+      osc.frequency.value = freq;
       gain.gain.setValueAtTime(0, ac.currentTime + t);
-      gain.gain.linearRampToValueAtTime(0.16, ac.currentTime + t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.38);
-      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + 0.38);
+      gain.gain.linearRampToValueAtTime(0.11, ac.currentTime + t + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.42);
+      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + 0.42);
     });
   } catch(e) {}
 }
-function playComplete() {
+// 전체 완료 팡파레: 상승 3음 + 마지막 롱
+function playFanfare() {
   try {
-    const ac = _getAC();
-    [0, 0.1, 0.2, 0.35, 0.5].forEach((t, i) => {
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
+    const ac = _ac(); if (!ac) return;
+    [[0, 523, 0.5], [0.2, 659, 0.45], [0.4, 784, 0.7]].forEach(([t, freq, dur]) => {
+      const osc = ac.createOscillator(), gain = ac.createGain();
       osc.connect(gain); gain.connect(ac.destination);
       osc.type = 'triangle';
-      osc.frequency.value = [523, 659, 784, 1047, 1318][i];
+      osc.frequency.value = freq;
       gain.gain.setValueAtTime(0, ac.currentTime + t);
-      gain.gain.linearRampToValueAtTime(0.18, ac.currentTime + t + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.55);
-      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + 0.55);
+      gain.gain.linearRampToValueAtTime(0.15, ac.currentTime + t + 0.04);
+      gain.gain.setValueAtTime(0.15, ac.currentTime + t + dur * 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + dur);
+      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + dur);
     });
   } catch(e) {}
 }
@@ -525,7 +544,7 @@ function animateNext() {
   if (aniIndex >= aniTeams.length) {
     document.getElementById('matching-title').textContent = '💞 매칭 완료!';
     document.getElementById('slot-area').innerHTML = '';
-    playComplete();
+    playFanfare();
     launchConfetti();
     setTimeout(() => { if (!aniCancelled) showResults(); }, 2000);
     return;
@@ -599,7 +618,8 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
   const targetIdx = nameList.lastIndexOf(target);
   const finalY = -(targetIdx * REEL_ITEM_H) + (REEL_WIN_H / 2) - (REEL_ITEM_H / 2);
   let startTime = null;
-  let lastTickIdx = -1;
+  let lastTickIdx = -999;
+  let lastTickTime = 0;
   function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
   function frame(ts) {
     if (aniCancelled) return;
@@ -611,13 +631,20 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
     reel.style.transform = `translateY(${currentY.toFixed(2)}px)`;
     reel.style.filter = progress < 0.65
       ? `blur(${((1 - progress / 0.65) * 3).toFixed(1)}px)` : 'none';
+    // speed: 1=최고속(초반), 0=정지(말미) — easeOutQuart 미분 ∝ (1-t)^3
+    const speed = Math.pow(1 - progress, 3);
+    const minInterval = 28 + (1 - speed) * 160; // 빠를때 ~28ms, 느려질때 ~188ms
     const tickIdx = Math.floor(-currentY / REEL_ITEM_H);
-    if (tickIdx !== lastTickIdx) { lastTickIdx = tickIdx; playTick(); }
+    if (tickIdx !== lastTickIdx && (ts - lastTickTime) >= minInterval) {
+      lastTickIdx = tickIdx; lastTickTime = ts;
+      playTick(speed);
+    }
     if (progress < 1) {
       requestAnimationFrame(frame);
     } else {
       reel.style.transform = `translateY(${finalY}px)`;
       reel.style.filter    = 'none';
+      playThud();
       win.classList.add('slot-win-pop');
       win.classList.add(gender === 'male' ? 'slot-glow-m' : 'slot-glow-f');
       setTimeout(() => win.classList.remove('slot-win-pop'), 500);
@@ -785,6 +812,7 @@ function pickManualVenue(teamIdx) {
   openVenuePicker(venue => { manualTeams[teamIdx].venue = venue; renderManual(); });
 }
 function finalizeManual() {
+  _initAC();
   const fixedTeams = manualTeams.filter(t => t.members.length > 0);
   const pool = getPool();
   const assigned = new Set(fixedTeams.flatMap(t => t.members.map(m => m.id)));
