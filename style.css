@@ -32,7 +32,7 @@ body {
   position: relative;
   overflow: hidden;
 }
-#page-matching.active { display: flex; }
+#page-matching.active { display: flex; justify-content: center; }
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -111,6 +111,11 @@ body {
 .btn-exclude { padding: 4px 10px; border-radius: 16px; border: 1.5px solid #fca5a5; background: #fff; color: var(--danger); font-size: .75rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap; }
 .btn-exclude.on { background: #fee2e2; border-color: var(--danger); }
 .venue-card { background: var(--surface); border-radius: var(--radius); padding: 13px 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); display: flex; align-items: center; gap: 12px; }
+.venue-priority-badge { width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: #fff; font-size: .72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.venue-order-btns { display: flex; flex-direction: column; gap: 2px; }
+.btn-order { background: none; border: 1px solid var(--border); border-radius: 4px; width: 22px; height: 18px; font-size: .6rem; cursor: pointer; color: var(--muted); display: flex; align-items: center; justify-content: center; transition: all .1s; padding: 0; }
+.btn-order:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.btn-order:disabled { opacity: .25; cursor: default; }
 .venue-icon { font-size: 1.6rem; flex-shrink: 0; }
 .venue-info { flex: 1; }
 .venue-name { font-weight: 700; font-size: .93rem; margin-bottom: 4px; }

@@ -22,6 +22,24 @@ async function loadDB() {
   db.requiredMembers = (mems || []).filter(m => m.member_type === 'required').map(_fromMember);
   db.optionalMembers = (mems || []).filter(m => m.member_type === 'optional').map(_fromMember);
   db.venues = (vens || []).map(v => ({ id: v.id, name: v.name, requiresCar: v.requires_car }));
+  _applyVenueOrder();
+}
+function _applyVenueOrder() {
+  try {
+    const raw = localStorage.getItem('iuba_venue_order');
+    if (!raw) return;
+    const order = JSON.parse(raw);
+    db.venues.sort((a, b) => {
+      const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+      if (ia === -1 && ib === -1) return 0;
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  } catch(e) {}
+}
+function _saveVenueOrder() {
+  localStorage.setItem('iuba_venue_order', JSON.stringify(db.venues.map(v => v.id)));
 }
 async function _upsertMember(member, type) {
   const { error } = await supa.from('members').upsert({
@@ -145,7 +163,7 @@ async function toggleAttend(id) {
 function renderVenues() {
   const list = db.venues;
   document.getElementById('empty-venues').style.display = list.length ? 'none' : 'block';
-  document.getElementById('list-venues').innerHTML = list.map(v => venueCardHTML(v)).join('');
+  document.getElementById('list-venues').innerHTML = list.map((v, i) => venueCardHTML(v, i, list.length)).join('');
 }
 // ============================================================
 // HTML 생성 헬퍼
@@ -193,17 +211,22 @@ function optionalCardHTML(m) {
       </div>
     </div>`;
 }
-function venueCardHTML(v) {
+function venueCardHTML(v, idx, total) {
   const icon = v.requiresCar ? '🚗📍' : '📍';
   const cTag = v.requiresCar ? '<span class="tag tag-car">차량 필요</span>' : '';
   return `
     <div class="venue-card">
+      <div class="venue-priority-badge">${idx + 1}</div>
       <div class="venue-icon">${icon}</div>
       <div class="venue-info">
         <div class="venue-name">${esc(v.name)}</div>
         <div class="tags" style="margin-top:4px">${cTag}</div>
       </div>
       <div class="card-actions">
+        <div class="venue-order-btns">
+          <button class="btn-order" onclick="moveVenueUp('${v.id}')" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button class="btn-order" onclick="moveVenueDown('${v.id}')" ${idx === total - 1 ? 'disabled' : ''}>▼</button>
+        </div>
         <button class="btn-icon" onclick="openVenueEdit('${v.id}')">✏️</button>
         <button class="btn-icon" onclick="deleteVenue('${v.id}')">🗑️</button>
       </div>
@@ -439,8 +462,10 @@ function generateTeams(members) {
 }
 function assignVenues(teams, venues) {
   if (!venues.length) return teams.map(t => ({ members: t, venue: null }));
-  const carVenues  = shuffle(venues.filter(v => v.requiresCar));
-  const freeVenues = shuffle(venues.filter(v => !v.requiresCar));
+  // 우선순위 순서 유지, 팀 수만큼만 사용 (초과 장소는 낮은 순위부터 제외)
+  const usedVenues = venues.slice(0, teams.length);
+  const carVenues  = usedVenues.filter(v => v.requiresCar);
+  const freeVenues = usedVenues.filter(v => !v.requiresCar);
   const carTeams   = shuffle(teams.filter(t => t.some(m => m.hasCar)));
   if (carVenues.length > carTeams.length) {
     toast(`⚠️ 차량 필요 장소(${carVenues.length})가 차량 보유 팀(${carTeams.length})보다 많습니다.`);
@@ -548,7 +573,7 @@ function playFanfare() {
     osc1.stop(now + 1.5); osc2.stop(now + 1.5);
   } catch(e) {}
 }
-// BGM: 스핀 중 저음 분위기음 (참고앱 startBgm/stopBgm 방식)
+// BGM: 스핀 중 저음 분위기음 — sine 파형으로 울림 제거
 let _bgmOsc = null, _bgmGain = null, _bgmLfo = null, _bgmPlaying = false;
 function startBgm() {
   if (_bgmPlaying) return;
@@ -560,17 +585,17 @@ function startBgm() {
     _bgmLfo  = ac.createOscillator();
     const lfoGain = ac.createGain();
     const filter  = ac.createBiquadFilter();
-    _bgmOsc.type = 'sawtooth';
-    _bgmOsc.frequency.setValueAtTime(55, ac.currentTime);
+    _bgmOsc.type = 'sine';                               // sawtooth→sine: 하모닉 울림 제거
+    _bgmOsc.frequency.setValueAtTime(110, ac.currentTime); // A2, 좀 더 존재감
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(200, ac.currentTime);
+    filter.frequency.setValueAtTime(400, ac.currentTime);
     _bgmLfo.type = 'sine';
-    _bgmLfo.frequency.setValueAtTime(0.5, ac.currentTime);
-    lfoGain.gain.setValueAtTime(300, ac.currentTime);
+    _bgmLfo.frequency.setValueAtTime(0.4, ac.currentTime);
+    lfoGain.gain.setValueAtTime(60, ac.currentTime);     // 300→60: 필터 변조 폭 최소화
     _bgmLfo.connect(lfoGain);
     lfoGain.connect(filter.frequency);
     _bgmGain.gain.setValueAtTime(0, ac.currentTime);
-    _bgmGain.gain.linearRampToValueAtTime(0.12, ac.currentTime + 0.8);
+    _bgmGain.gain.linearRampToValueAtTime(0.08, ac.currentTime + 0.8); // 0.12→0.08 적정 볼륨
     _bgmOsc.connect(filter);
     filter.connect(_bgmGain);
     _bgmGain.connect(ac.destination);
@@ -998,6 +1023,18 @@ async function saveVenue(e) {
   renderVenues();
   refreshHome();
   toast(id ? '수정되었습니다.' : '장소가 추가되었습니다.');
+}
+function moveVenueUp(id) {
+  const idx = db.venues.findIndex(v => v.id === id);
+  if (idx <= 0) return;
+  [db.venues[idx - 1], db.venues[idx]] = [db.venues[idx], db.venues[idx - 1]];
+  _saveVenueOrder(); renderVenues(); refreshHome();
+}
+function moveVenueDown(id) {
+  const idx = db.venues.findIndex(v => v.id === id);
+  if (idx < 0 || idx >= db.venues.length - 1) return;
+  [db.venues[idx], db.venues[idx + 1]] = [db.venues[idx + 1], db.venues[idx]];
+  _saveVenueOrder(); renderVenues(); refreshHome();
 }
 async function deleteVenue(id) {
   if (!confirm('정말 삭제하시겠습니까?')) return;
