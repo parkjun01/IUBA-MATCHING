@@ -209,6 +209,57 @@ body {
 .modal-footer .btn { flex: 1; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e293b; color: #fff; padding: 10px 22px; border-radius: 24px; font-size: .88rem; font-weight: 600; white-space: nowrap; z-index: 999; transition: transform .3s ease; pointer-events: none; }
 .toast.show { transform: translateX(-50%) translateY(0); }
+/* ── 가로 모드 ── */
+@media (orientation: landscape) {
+  body { max-width: 100%; }
+  .page { padding: 10px 24px; min-height: 100vh; }
+
+  /* 홈 - 2열 */
+  #page-home {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    column-gap: 24px;
+  }
+  #page-home .home-header { grid-column: 1 / -1; padding: 16px 0 10px; }
+  #page-home .home-header h1 { font-size: 1.6rem; }
+  #page-home .participants-card { grid-column: 1; grid-row: 2; margin-bottom: 0; align-self: start; }
+  #page-home .home-actions { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 10px; align-self: start; padding-top: 2px; }
+  #page-home .btn-start, #page-home .btn-manual { flex: 1; padding: 0 12px; min-height: 60px; }
+  #page-home .btn-admin-entry { grid-column: 1 / -1; grid-row: 3; margin-top: 10px; }
+
+  /* 확인 - 2열 */
+  #page-confirm {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+    align-content: start;
+  }
+  #page-confirm .page-header,
+  #page-confirm .page-desc { grid-column: 1 / -1; }
+  #page-confirm #confirm-list { grid-column: 1; }
+  #page-confirm #combo-count { grid-column: 2; }
+  #page-confirm .btn-start { grid-column: 1 / -1; }
+  #page-confirm > div[style] { grid-column: 1 / -1; }
+
+  /* 결과 - 2열 */
+  #page-results .results-list { columns: 2; column-gap: 14px; }
+  #page-results .result-card,
+  #page-results .result-divider { break-inside: avoid; }
+
+  /* 매칭 애니메이션 */
+  #page-matching { padding: 16px 24px 10px; }
+  .matching-title { font-size: 1.15rem; margin-bottom: 14px; }
+  .teams-revealed { max-height: 48vh; }
+  .slot-reel-win { height: 48px; }
+
+  /* 관리자 계열 페이지 최대 폭 */
+  #page-admin, #page-required, #page-optional, #page-venues, #page-manual {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+}
+
 /* ── 홈 페이지 다크 테마 ── */
 #page-home {
   background: linear-gradient(160deg, #080616 0%, #120a2e 60%, #0a1628 100%);
