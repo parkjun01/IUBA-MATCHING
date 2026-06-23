@@ -686,6 +686,64 @@ function stopBgm() {
   } catch(e) {}
   _bgmPlaying = false;
 }
+let _venueBgm = null;
+function startVenueBgm() {
+  if (_venueBgm) return;
+  try {
+    const ac = _ac(); if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    const master = ac.createGain();
+    master.gain.setValueAtTime(0, ac.currentTime);
+    master.gain.linearRampToValueAtTime(0.9, ac.currentTime + 0.4);
+    master.connect(ac.destination);
+    _venueBgm = { master, active: true };
+
+    // C major arpeggio: C4-E4-G4-C5-G4-E4 (melody) + bass
+    const melody = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+    const bass   = [130.81, 0,      196.00, 0,      196.00, 0     ];
+    const step = 0.18;
+
+    function tick(t) {
+      if (!_venueBgm?.active) return;
+      melody.forEach((freq, i) => {
+        const noteT = t + i * step;
+        const mo = ac.createOscillator(), mg = ac.createGain();
+        mo.type = 'triangle'; mo.frequency.value = freq;
+        mg.gain.setValueAtTime(0.0001, noteT);
+        mg.gain.linearRampToValueAtTime(0.14, noteT + 0.02);
+        mg.gain.exponentialRampToValueAtTime(0.001, noteT + step * 0.82);
+        mo.connect(mg); mg.connect(master);
+        mo.start(noteT); mo.stop(noteT + step);
+        if (bass[i]) {
+          const bo = ac.createOscillator(), bg = ac.createGain();
+          bo.type = 'sine'; bo.frequency.value = bass[i];
+          bg.gain.setValueAtTime(0.0001, noteT);
+          bg.gain.linearRampToValueAtTime(0.11, noteT + 0.02);
+          bg.gain.exponentialRampToValueAtTime(0.001, noteT + step * 0.65);
+          bo.connect(bg); bg.connect(master);
+          bo.start(noteT); bo.stop(noteT + step);
+        }
+      });
+      const loopLen = melody.length * step;
+      setTimeout(() => tick(t + loopLen), (loopLen - 0.1) * 1000);
+    }
+    tick(ac.currentTime + 0.1);
+  } catch(e) {}
+}
+function stopVenueBgm() {
+  if (!_venueBgm) return;
+  _venueBgm.active = false;
+  try {
+    const ac = _ac(); if (!ac) return;
+    const now = ac.currentTime;
+    _venueBgm.master.gain.cancelScheduledValues(now);
+    _venueBgm.master.gain.setValueAtTime(_venueBgm.master.gain.value, now);
+    _venueBgm.master.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    const g = _venueBgm.master;
+    setTimeout(() => { try { g.disconnect(); } catch(e) {} }, 700);
+  } catch(e) {}
+  _venueBgm = null;
+}
 function animateNext() {
   if (aniCancelled) { stopBgm(); return; }
   if (aniIndex >= aniTeams.length) {
@@ -844,6 +902,8 @@ function assignVenueCards(onDone) {
   titleEl.classList.add('title-pop');
   titleEl.addEventListener('animationend', () => titleEl.classList.remove('title-pop'), { once: true });
 
+  startVenueBgm();
+
   const container = document.getElementById('teams-revealed');
   const cards = container.querySelectorAll('.team-chip');
   let delay = 500;
@@ -896,7 +956,10 @@ function assignVenueCards(onDone) {
     delay += 900;
   });
 
-  setTimeout(() => { if (!aniCancelled && onDone) onDone(); }, delay + 300);
+  setTimeout(() => {
+    stopVenueBgm();
+    setTimeout(() => { if (!aniCancelled && onDone) onDone(); }, 400);
+  }, delay + 300);
 }
 function launchConfetti() {
   const container = document.getElementById('page-matching');
