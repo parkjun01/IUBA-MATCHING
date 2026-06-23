@@ -157,15 +157,20 @@ body {
 .slot-glow-m { border-color: rgba(96,165,250,.7) !important; box-shadow: 0 0 28px rgba(96,165,250,.35), inset 0 0 20px rgba(96,165,250,.12) !important; }
 .slot-glow-f { border-color: rgba(244,114,182,.7) !important; box-shadow: 0 0 28px rgba(244,114,182,.35), inset 0 0 20px rgba(244,114,182,.12) !important; }
 .teams-revealed { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 40vh; }
-.team-chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 16px 18px; backdrop-filter: blur(12px); opacity: 0; transform: translateY(16px) scale(.97); transition: opacity .45s ease, transform .45s cubic-bezier(.34,1.56,.64,1); }
+.team-chip { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.20); border-radius: 18px; padding: 16px 18px; backdrop-filter: blur(12px); opacity: 0; transform: translateY(16px) scale(.97); transition: opacity .45s ease, transform .45s cubic-bezier(.34,1.56,.64,1); }
 .team-chip.team-chip-in { opacity: 1; transform: translateY(0) scale(1); }
-.team-chip-no { font-size: 11px; font-weight: 700; color: rgba(196,181,253,.7); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
+.team-chip-no { font-size: 11px; font-weight: 700; color: rgba(196,181,253,.85); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
 .team-chip-members { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.name-pill { padding: 5px 14px; border-radius: 999px; font-size: 15px; font-weight: 800; background: rgba(255,255,255,.1); color: #fff; }
-.name-pill-male   { background: rgba(96,165,250,.22);  border: 1px solid rgba(96,165,250,.4); }
-.name-pill-female { background: rgba(244,114,182,.22); border: 1px solid rgba(244,114,182,.4); }
+.name-pill { padding: 6px 16px; border-radius: 999px; font-size: 16px; font-weight: 800; background: rgba(255,255,255,.1); color: #fff; }
+.name-pill-male   { background: rgba(96,165,250,.28);  border: 1px solid rgba(96,165,250,.55); }
+.name-pill-female { background: rgba(244,114,182,.28); border: 1px solid rgba(244,114,182,.55); }
 .pill-sep { color: rgba(255,255,255,.4); font-size: 14px; font-weight: 700; }
-.venue-pill { margin-top: 8px; font-size: 13px; color: rgba(255,255,255,.55); }
+.venue-pill { margin-top: 10px; font-size: 13px; font-weight: 600; color: #fff; background: rgba(167,139,250,.28); border: 1px solid rgba(167,139,250,.5); border-radius: 8px; padding: 6px 12px; display: inline-block; }
+@keyframes venuePop {
+  from { opacity: 0; transform: scale(.85) translateY(5px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.venue-pill-anim { animation: venuePop .4s cubic-bezier(.34,1.56,.64,1) both; }
 .confetti-dot { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); }
 @keyframes confettiFly {
   0%   { opacity: 0; transform: translate(-50%,-50%) translate(0,0) scale(.5); }

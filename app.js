@@ -359,25 +359,58 @@ function getAllTeamSizeConfigs(n) {
   return configs; // 3인 팀 많은 순서
 }
 
+// 혼성팀 우선 빌더: 3인 조에서 1남+2여 우선 시도, 2인 조는 반드시 동성
+function _tryBuildMixed(members, threes, twos) {
+  const males   = shuffle(members.filter(m => m.gender === 'male'));
+  const females = shuffle(members.filter(m => m.gender === 'female'));
+  const teams   = [];
+  for (let i = 0; i < threes; i++) {
+    if (males.length >= 1 && females.length >= 2) {
+      teams.push([males.splice(0,1)[0], females.splice(0,1)[0], females.splice(0,1)[0]]);
+    } else if (males.length >= 3) {
+      teams.push(males.splice(0, 3));
+    } else if (females.length >= 3) {
+      teams.push(females.splice(0, 3));
+    } else return null;
+  }
+  for (let i = 0; i < twos; i++) {
+    if (males.length >= 2)        teams.push(males.splice(0, 2));
+    else if (females.length >= 2) teams.push(females.splice(0, 2));
+    else return null;
+  }
+  if (males.length > 0 || females.length > 0) return null;
+  return teams;
+}
 function generateTeamsWithConfig(members, twos, threes) {
   const sizes = [...Array(threes).fill(3), ...Array(twos).fill(2)];
-  function tryBuild() {
-    const s = shuffle(members);
-    let idx = 0, teams = [];
+  function tryBuildRandom() {
+    const s = shuffle(members); let idx = 0; const teams = [];
     for (const sz of sizes) {
-      const team = s.slice(idx, idx + sz);
-      idx += sz;
+      const team = s.slice(idx, idx + sz); idx += sz;
       if (!validTeam(team)) return null;
       teams.push(team);
     }
     return teams;
   }
-  for (let t = 0; t < 2000; t++) {
-    const teams = tryBuild();
-    if (teams && teams.every(t => t.filter(m => m.role !== '일반').length <= 1)) return teams;
+  const noLeader = t => t.filter(m => m.role !== '일반').length <= 1;
+  // 1순위: 혼성 + 임원 분리
+  for (let t = 0; t < 800; t++) {
+    const teams = _tryBuildMixed(members, threes, twos);
+    if (teams && teams.every(noLeader)) return teams;
   }
-  for (let t = 0; t < 1000; t++) {
-    const teams = tryBuild();
+  // 2순위: 혼성 (임원 중복 허용)
+  for (let t = 0; t < 400; t++) {
+    const teams = _tryBuildMixed(members, threes, twos);
+    if (teams) return teams;
+  }
+  // 3순위: 랜덤 + 임원 분리
+  for (let t = 0; t < 1500; t++) {
+    const teams = tryBuildRandom();
+    if (teams && teams.every(noLeader)) return teams;
+  }
+  // 4순위: 랜덤 (임원 중복 허용)
+  for (let t = 0; t < 800; t++) {
+    const teams = tryBuildRandom();
     if (teams) return teams;
   }
   return null;
@@ -432,32 +465,39 @@ function validTeam(team) {
 }
 function generateTeams(members) {
   if (members.length < 2) throw new Error('매칭 대상이 2명 이상이어야 합니다.');
-
-  function tryBuild() {
-    const s = shuffle(members);
-    const sizes = teamSizes(s.length);
-    let idx = 0, teams = [];
+  const sizes = teamSizes(members.length);
+  const threes = sizes.filter(s => s === 3).length;
+  const twos   = sizes.filter(s => s === 2).length;
+  function tryBuildRandom() {
+    const s = shuffle(members); let idx = 0; const teams = [];
     for (const sz of sizes) {
-      const team = s.slice(idx, idx + sz);
-      idx += sz;
+      const team = s.slice(idx, idx + sz); idx += sz;
       if (!validTeam(team)) return null;
       teams.push(team);
     }
     return teams;
   }
-
-  // 1순위: 임원끼리 같은 팀이 없는 조합
-  for (let t = 0; t < 2000; t++) {
-    const teams = tryBuild();
-    if (teams && teams.every(t => t.filter(m => m.role !== '일반').length <= 1)) return teams;
+  const noLeader = t => t.filter(m => m.role !== '일반').length <= 1;
+  // 1순위: 혼성 + 임원 분리
+  for (let t = 0; t < 800; t++) {
+    const teams = _tryBuildMixed(members, threes, twos);
+    if (teams && teams.every(noLeader)) return teams;
   }
-
-  // 2순위(후순위): 임원 중복 허용
-  for (let t = 0; t < 1000; t++) {
-    const teams = tryBuild();
+  // 2순위: 혼성 (임원 중복 허용)
+  for (let t = 0; t < 400; t++) {
+    const teams = _tryBuildMixed(members, threes, twos);
     if (teams) return teams;
   }
-
+  // 3순위: 랜덤 + 임원 분리
+  for (let t = 0; t < 1500; t++) {
+    const teams = tryBuildRandom();
+    if (teams && teams.every(noLeader)) return teams;
+  }
+  // 4순위: 랜덤 (임원 중복 허용)
+  for (let t = 0; t < 800; t++) {
+    const teams = tryBuildRandom();
+    if (teams) return teams;
+  }
   throw new Error('유효한 팀을 구성할 수 없습니다.\n남자 2명 + 여자 1명 조합은 불가합니다.\n인원 구성을 확인해 주세요.');
 }
 function assignVenues(teams, venues) {
@@ -620,12 +660,15 @@ function stopBgm() {
 function animateNext() {
   if (aniCancelled) { stopBgm(); return; }
   if (aniIndex >= aniTeams.length) {
-    document.getElementById('matching-title').textContent = '💞 매칭 완료!';
     document.getElementById('slot-area').innerHTML = '';
     stopBgm();
-    playFanfare();
-    launchConfetti();
-    setTimeout(() => { if (!aniCancelled) showResults(); }, 2000);
+    assignVenueCards(() => {
+      if (aniCancelled) return;
+      document.getElementById('matching-title').textContent = '💞 매칭 완료!';
+      playFanfare();
+      launchConfetti();
+      setTimeout(() => { if (!aniCancelled) showResults(); }, 2000);
+    });
     return;
   }
   if (aniIndex === 0) startBgm();
@@ -733,25 +776,44 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
   }
   requestAnimationFrame(frame);
 }
-function revealTeam({ members, venue }, no) {
+function revealTeam({ members }, no) {
   playReveal();
   const membersHTML = members.map(m => {
     const icon = m.gender === 'male' ? '👦' : '👧';
     return `<span class="name-pill name-pill-${m.gender}">${icon} ${esc(m.name)}</span>`;
   }).join('');
-  const venueHTML = venue
-    ? `<div class="venue-pill">📍 ${esc(venue.name)}${venue.requiresCar ? ' 🚗' : ''}</div>` : '';
   const card = document.createElement('div');
   card.className = 'team-chip';
   card.innerHTML = `
     <div class="team-chip-no">팀 ${no}</div>
-    <div class="team-chip-members">${membersHTML}</div>
-    ${venueHTML}`;
+    <div class="team-chip-members">${membersHTML}</div>`;
   const container = document.getElementById('teams-revealed');
   container.appendChild(card);
   container.scrollTop = container.scrollHeight;
   requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('team-chip-in')));
   document.getElementById('slot-area').innerHTML = '';
+}
+function assignVenueCards(onDone) {
+  const venueCount = aniTeams.filter(t => t.venue).length;
+  if (!venueCount) { if (onDone) onDone(); return; }
+  document.getElementById('matching-title').textContent = '📍 장소 배치 중...';
+  const cards = document.querySelectorAll('#teams-revealed .team-chip');
+  let delay = 300;
+  aniTeams.forEach((result, i) => {
+    if (!result.venue) return;
+    setTimeout(() => {
+      if (aniCancelled) return;
+      const card = cards[i]; if (!card) return;
+      const pill = document.createElement('div');
+      pill.className = 'venue-pill venue-pill-anim';
+      pill.innerHTML = `📍 <strong>${esc(result.venue.name)}</strong>${result.venue.requiresCar ? ' 🚗' : ''}`;
+      card.appendChild(pill);
+      playTick(0.25);
+      document.getElementById('teams-revealed').scrollTop = document.getElementById('teams-revealed').scrollHeight;
+    }, delay);
+    delay += 500;
+  });
+  setTimeout(() => { if (!aniCancelled && onDone) onDone(); }, delay + 200);
 }
 function launchConfetti() {
   const container = document.getElementById('page-matching');
