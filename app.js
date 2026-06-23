@@ -331,18 +331,32 @@ function validTeam(team) {
 }
 function generateTeams(members) {
   if (members.length < 2) throw new Error('매칭 대상이 2명 이상이어야 합니다.');
-  for (let t = 0; t < 3000; t++) {
+
+  function tryBuild() {
     const s = shuffle(members);
     const sizes = teamSizes(s.length);
-    let idx = 0, ok = true, teams = [];
+    let idx = 0, teams = [];
     for (const sz of sizes) {
       const team = s.slice(idx, idx + sz);
       idx += sz;
-      if (!validTeam(team)) { ok = false; break; }
+      if (!validTeam(team)) return null;
       teams.push(team);
     }
-    if (ok) return teams;
+    return teams;
   }
+
+  // 1순위: 임원끼리 같은 팀이 없는 조합
+  for (let t = 0; t < 2000; t++) {
+    const teams = tryBuild();
+    if (teams && teams.every(t => t.filter(m => m.role !== '일반').length <= 1)) return teams;
+  }
+
+  // 2순위(후순위): 임원 중복 허용
+  for (let t = 0; t < 1000; t++) {
+    const teams = tryBuild();
+    if (teams) return teams;
+  }
+
   throw new Error('유효한 팀을 구성할 수 없습니다.\n남자 2명 + 여자 1명 조합은 불가합니다.\n인원 구성을 확인해 주세요.');
 }
 function assignVenues(teams, venues) {
