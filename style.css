@@ -131,11 +131,9 @@ body {
 .slot-sep { color: rgba(255,255,255,.45); font-size: 18px; font-weight: 800; flex-shrink: 0; }
 .slot-reel-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .slot-member-lbl { color: rgba(196,181,253,.7); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.slot-reel-win { position: relative; width: 100%; height: 168px; background: rgba(0,0,0,.45); border: 1px solid rgba(167,139,250,.35); border-radius: 16px; overflow: hidden; transition: border-color .3s, box-shadow .3s; }
-.slot-fade-top, .slot-fade-bot { position: absolute; left: 0; right: 0; height: 52px; pointer-events: none; z-index: 3; }
-.slot-fade-top { top: 0; background: linear-gradient(to bottom, rgba(0,0,0,.65), transparent); }
-.slot-fade-bot { bottom: 0; background: linear-gradient(to top, rgba(0,0,0,.65), transparent); }
-.slot-center-line { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: rgba(167,139,250,.55); box-shadow: 0 0 10px rgba(167,139,250,.6); z-index: 4; }
+.slot-reel-win { position: relative; width: 100%; height: 56px; background: rgba(0,0,0,.45); border: 1px solid rgba(167,139,250,.35); border-radius: 12px; overflow: hidden; transition: border-color .3s, box-shadow .3s; }
+.slot-fade-top, .slot-fade-bot { display: none; }
+.slot-center-line { display: none; }
 .slot-reel { position: absolute; left: 0; right: 0; top: 0; will-change: transform, filter; }
 .slot-reel-item { height: 56px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: 900; letter-spacing: -.02em; }
 @keyframes slotWinPop {
@@ -211,3 +209,37 @@ body {
 .modal-footer .btn { flex: 1; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e293b; color: #fff; padding: 10px 22px; border-radius: 24px; font-size: .88rem; font-weight: 600; white-space: nowrap; z-index: 999; transition: transform .3s ease; pointer-events: none; }
 .toast.show { transform: translateX(-50%) translateY(0); }
+/* ── 홈 페이지 다크 테마 ── */
+#page-home {
+  background: linear-gradient(160deg, #080616 0%, #120a2e 60%, #0a1628 100%);
+}
+#page-home .home-header h1 { color: #c4b5fd; }
+#page-home .subtitle { color: rgba(196,181,253,.55); }
+#page-home .participants-card {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(167,139,250,.22);
+  box-shadow: 0 4px 24px rgba(0,0,0,.4);
+  backdrop-filter: blur(12px);
+}
+#page-home .participants-label { color: rgba(196,181,253,.6); }
+#page-home .participants-count { color: #c4b5fd; }
+#page-home .btn-add-participant { background: rgba(167,139,250,.45); }
+#page-home .btn-add-participant:hover { background: rgba(167,139,250,.7); }
+#page-home .home-names-empty { color: rgba(255,255,255,.35); }
+#page-home .name-chip {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(167,139,250,.3);
+  color: #fff;
+}
+#page-home .chip-rm { color: rgba(255,255,255,.35); }
+#page-home .chip-rm:hover { color: #f87171; }
+#page-home .btn-admin-entry {
+  border-color: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.32);
+  background: transparent;
+}
+#page-home .btn-admin-entry:hover {
+  border-color: rgba(167,139,250,.4);
+  color: rgba(196,181,253,.7);
+  background: rgba(255,255,255,.04);
+}

@@ -362,11 +362,12 @@ function assignVenues(teams, venues) {
 // ============================================================
 let matchResult  = [];
 let _manualCount = 0;
+let _aniOffset   = 0;
 let aniTeams     = [];
 let aniIndex     = 0;
 let aniCancelled = false;
 const REEL_ITEM_H = 56;
-const REEL_WIN_H  = 168;
+const REEL_WIN_H  = 56;
 function startAnimation() {
   const pool = getPool();
   if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
@@ -375,6 +376,7 @@ function startAnimation() {
   catch (e) { toast(e.message); return; }
   const result = assignVenues(teams, db.venues);
   _manualCount = 0;
+  _aniOffset   = 0;
   matchResult  = result;
   aniTeams     = result;
   aniIndex     = 0;
@@ -395,7 +397,7 @@ function animateNext() {
     return;
   }
   const { members: team, venue } = aniTeams[aniIndex];
-  const teamNo = aniIndex + 1;
+  const teamNo = aniIndex + 1 + _aniOffset;
   document.getElementById('matching-title').textContent = `팀 ${teamNo} 뽑는 중...`;
   const allNames = getPool().map(m => m.name);
   buildSlotUI(team, allNames, () => {
@@ -657,7 +659,19 @@ function finalizeManual() {
   }
   _manualCount = fixedTeams.length;
   matchResult = [...fixedTeams.map(t => ({ members: t.members, venue: t.venue })), ...randomResults];
-  showResults();
+
+  if (randomResults.length === 0) { showResults(); return; }
+
+  aniTeams     = randomResults;
+  aniIndex     = 0;
+  aniCancelled = false;
+  _aniOffset   = _manualCount;
+
+  document.getElementById('teams-revealed').innerHTML = '';
+  document.getElementById('slot-area').innerHTML = '';
+  document.getElementById('matching-title').textContent = '🎯 나머지 랜덤 매칭 중...';
+  showPage('page-matching');
+  setTimeout(animateNext, 800);
 }
 // ============================================================
 // 멤버 모달
