@@ -19,7 +19,10 @@
   <div class="participants-card">
     <div class="participants-header">
       <span class="participants-label">이번 참석자</span>
-      <span class="participants-count" id="stat-total">0명</span>
+      <div class="participants-header-right">
+        <span class="participants-count" id="stat-total">0명</span>
+        <button class="btn-add-participant" onclick="openAddParticipant()" title="참여 가능 인원 추가">+</button>
+      </div>
     </div>
     <div id="home-names" class="home-names">
       <p class="home-names-empty">관리자 페이지에서 멤버를 추가해주세요.</p>
@@ -130,7 +133,7 @@
 <!-- ===== 결과 ===== -->
 <div id="page-results" class="page">
   <div class="page-header">
-    <button class="btn-back" onclick="showPage('page-home')">← 처음으로</button>
+    <button class="btn-back" onclick="goHome()">← 처음으로</button>
     <h2>매칭 결과 🎉</h2>
     <button class="btn btn-sm btn-secondary" onclick="restartMatching()">🔄 다시 뽑기</button>
   </div>
@@ -235,6 +238,17 @@
     <div id="member-pick-list" class="pick-list"></div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" onclick="closeModal('modal-member-pick')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 참여 가능 인원 추가 모달 ===== -->
+<div id="modal-add-participant" class="modal-overlay" onclick="onOverlayClick(event,'modal-add-participant')">
+  <div class="modal">
+    <h3>참여 가능 인원</h3>
+    <div id="add-participant-list" class="pick-list"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-participant')">닫기</button>
     </div>
   </div>
 </div>

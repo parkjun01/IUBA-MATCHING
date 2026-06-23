@@ -73,21 +73,52 @@ function showPage(id) {
 // 홈
 // ============================================================
 function refreshHome() {
-  const pool = [...db.requiredMembers, ...db.optionalMembers.filter(m => m.attending)];
+  const pool = getPool();
   document.getElementById('stat-total').textContent = pool.length + '명';
   const container = document.getElementById('home-names');
   if (pool.length === 0) {
     container.innerHTML = '<p class="home-names-empty">관리자 페이지에서 멤버를 추가해주세요.</p>';
   } else {
-    container.innerHTML = pool.map(m => `<span class="name-chip">${esc(m.name)}</span>`).join('');
+    container.innerHTML = pool.map(m =>
+      `<span class="name-chip name-chip-session">${esc(m.name)}<button class="chip-rm" onclick="removeParticipant('${m.id}')">✕</button></span>`
+    ).join('');
   }
+}
+
+function removeParticipant(id) {
+  sessionExcluded.add(id);
+  sessionIncluded.delete(id);
+  refreshHome();
+}
+
+function openAddParticipant() {
+  const poolIds = new Set(getPool().map(m => m.id));
+  const available = [...db.requiredMembers, ...db.optionalMembers].filter(m => !poolIds.has(m.id));
+  if (available.length === 0) { toast('추가 가능한 인원이 없습니다.'); return; }
+  document.getElementById('add-participant-list').innerHTML = available.map(m =>
+    `<button class="pick-item" onclick="addParticipant('${m.id}')">${esc(m.name)}</button>`
+  ).join('');
+  openModal('modal-add-participant');
+}
+
+function addParticipant(id) {
+  sessionExcluded.delete(id);
+  const opt = db.optionalMembers.find(m => m.id === id);
+  if (opt && !opt.attending) sessionIncluded.add(id);
+  closeModal('modal-add-participant');
+  refreshHome();
 }
 
 function startMatching() {
   const pool = getPool();
   if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
-  sessionExcluded.clear();
   showPage('page-confirm');
+}
+
+function goHome() {
+  sessionExcluded.clear();
+  sessionIncluded.clear();
+  showPage('page-home');
 }
 
 // ============================================================
@@ -197,11 +228,14 @@ function esc(s) {
 // ============================================================
 // 확인 페이지 + 세션 제외
 // ============================================================
-const sessionExcluded = new Set();
+const sessionExcluded = new Set(); // 이번 회차 제외
+const sessionIncluded = new Set(); // 이번 회차 임시 추가 (불필참 중 비참석자)
 
 function getPool() {
   const req = db.requiredMembers.filter(m => !sessionExcluded.has(m.id));
-  const opt = db.optionalMembers.filter(m => m.attending && !sessionExcluded.has(m.id));
+  const opt = db.optionalMembers.filter(m =>
+    (m.attending || sessionIncluded.has(m.id)) && !sessionExcluded.has(m.id)
+  );
   return [...req, ...opt];
 }
 
@@ -591,7 +625,6 @@ function renderResults() {
 
 function restartMatching() {
   aniCancelled = true;
-  sessionExcluded.clear();
   showPage('page-confirm');
 }
 

@@ -54,7 +54,23 @@ body {
   margin-bottom: 12px;
 }
 .participants-label { font-size: .8rem; font-weight: 700; color: var(--muted); }
+.participants-header-right { display: flex; align-items: center; gap: 8px; }
 .participants-count { font-size: 1rem; font-weight: 800; color: var(--primary); }
+.btn-add-participant {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  border: none; cursor: pointer; font-size: 1.1rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; transition: background .15s; flex-shrink: 0;
+}
+.btn-add-participant:hover { background: var(--primary-d); }
+.name-chip-session { display: inline-flex; align-items: center; gap: 4px; padding-right: 6px; }
+.chip-rm {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: .68rem; padding: 0 1px;
+  line-height: 1; transition: color .1s; font-family: inherit;
+}
+.chip-rm:hover { color: var(--danger); }
 .home-names { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
 .home-names-empty { font-size: .82rem; color: var(--muted); }
 .name-chip {
