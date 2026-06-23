@@ -119,6 +119,14 @@ body {
 .combo-info { background: linear-gradient(135deg, #ede9fe, #dbeafe); border-radius: 14px; padding: 16px; margin: 14px 0 18px; text-align: center; color: var(--primary); font-weight: 700; font-size: .85rem; line-height: 1.4; }
 .combo-info .combo-num { display: block; font-size: 2rem; font-weight: 900; margin-bottom: 2px; }
 .combo-info.warn { background: linear-gradient(135deg, #fee2e2, #fef9c3); color: var(--danger); }
+.size-config-wrap { margin: 14px 0 18px; }
+.size-config-title { font-size: .78rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.size-config-cards { display: flex; flex-direction: column; gap: 8px; }
+.size-config-card { width: 100%; background: linear-gradient(135deg, #ede9fe, #dbeafe); border: none; border-radius: 14px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-family: inherit; transition: all .15s; text-align: left; }
+.size-config-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(79,70,229,.2); }
+.size-config-card:active { transform: scale(.97); }
+.size-config-label { font-size: 1rem; font-weight: 800; color: var(--primary); }
+.size-config-total { font-size: .73rem; font-weight: 600; color: var(--muted); }
 /* ── 매칭 애니메이션 ── */
 .matching-title { font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 28px; text-align: center; letter-spacing: -.02em; animation: titlePulse 1.6s ease-in-out infinite; text-shadow: 0 0 20px rgba(167,139,250,.5); }
 @keyframes titlePulse {

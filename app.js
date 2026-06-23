@@ -245,17 +245,26 @@ function renderConfirm() {
     el.innerHTML = '<span class="combo-num">0</span>매칭 대상이 2명 이상이어야 합니다.';
     return;
   }
-  const cnt = countCombinations(pool);
-  if (cnt === null) {
-    el.className = 'combo-info';
-    el.innerHTML = '<span class="combo-num">∞</span>유효한 팀 구성 경우의 수 (인원 초과로 계산 생략)';
-  } else if (cnt === 0) {
+  const configs = getAllTeamSizeConfigs(pool.length);
+  if (configs.length === 0) {
     el.className = 'combo-info warn';
     el.innerHTML = '<span class="combo-num">0</span>유효한 팀 구성이 없습니다. 성별 구성을 확인해주세요.';
-  } else {
-    el.className = 'combo-info';
-    el.innerHTML = `<span class="combo-num">${cnt.toLocaleString()}가지</span>유효한 팀 구성 경우의 수`;
+    return;
   }
+  el.className = 'size-config-wrap';
+  el.innerHTML = `
+    <p class="size-config-title">팀 구성 방식 선택</p>
+    <div class="size-config-cards">
+      ${configs.map(c => {
+        const parts = [];
+        if (c.threes > 0) parts.push(`3인 ${c.threes}팀`);
+        if (c.twos   > 0) parts.push(`2인 ${c.twos}팀`);
+        return `<button class="size-config-card" onclick="selectSizeConfig(${c.twos},${c.threes})">
+          <span class="size-config-label">${parts.join(' + ')}</span>
+          <span class="size-config-total">총 ${c.twos + c.threes}팀 · 탭해서 시작 →</span>
+        </button>`;
+      }).join('')}
+    </div>`;
 }
 function toggleExclude(id) {
   sessionExcluded.has(id) ? sessionExcluded.delete(id) : sessionExcluded.add(id);
@@ -301,6 +310,60 @@ function countCombinations(members) {
   }
   return dp((1 << n) - 1);
 }
+// ============================================================
+// 팀 규모 구성
+// ============================================================
+function getAllTeamSizeConfigs(n) {
+  const configs = [];
+  for (let b = Math.floor(n / 3); b >= 0; b--) {
+    const rem = n - b * 3;
+    if (rem % 2 === 0) configs.push({ twos: rem / 2, threes: b });
+  }
+  return configs; // 3인 팀 많은 순서
+}
+
+function generateTeamsWithConfig(members, twos, threes) {
+  const sizes = [...Array(threes).fill(3), ...Array(twos).fill(2)];
+  function tryBuild() {
+    const s = shuffle(members);
+    let idx = 0, teams = [];
+    for (const sz of sizes) {
+      const team = s.slice(idx, idx + sz);
+      idx += sz;
+      if (!validTeam(team)) return null;
+      teams.push(team);
+    }
+    return teams;
+  }
+  for (let t = 0; t < 2000; t++) {
+    const teams = tryBuild();
+    if (teams && teams.every(t => t.filter(m => m.role !== '일반').length <= 1)) return teams;
+  }
+  for (let t = 0; t < 1000; t++) {
+    const teams = tryBuild();
+    if (teams) return teams;
+  }
+  return null;
+}
+
+function selectSizeConfig(twos, threes) {
+  const pool = getPool();
+  const teams = generateTeamsWithConfig(pool, twos, threes);
+  if (!teams) { toast('유효한 팀을 구성할 수 없습니다. 성별 구성을 확인해주세요.'); return; }
+  const result = assignVenues(teams, db.venues);
+  _manualCount = 0;
+  _aniOffset   = 0;
+  matchResult  = result;
+  aniTeams     = result;
+  aniIndex     = 0;
+  aniCancelled = false;
+  document.getElementById('teams-revealed').innerHTML = '';
+  document.getElementById('slot-area').innerHTML = '';
+  document.getElementById('matching-title').textContent = '🎯 매칭 중...';
+  showPage('page-matching');
+  setTimeout(animateNext, 800);
+}
+
 // ============================================================
 // 매칭 알고리즘
 // ============================================================
@@ -387,21 +450,10 @@ const REEL_WIN_H  = 56;
 function startAnimation() {
   const pool = getPool();
   if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
-  let teams;
-  try { teams = generateTeams(pool); }
-  catch (e) { toast(e.message); return; }
-  const result = assignVenues(teams, db.venues);
-  _manualCount = 0;
-  _aniOffset   = 0;
-  matchResult  = result;
-  aniTeams     = result;
-  aniIndex     = 0;
-  aniCancelled = false;
-  document.getElementById('teams-revealed').innerHTML = '';
-  document.getElementById('slot-area').innerHTML = '';
-  document.getElementById('matching-title').textContent = '🎯 매칭 중...';
-  showPage('page-matching');
-  setTimeout(animateNext, 800);
+  const configs = getAllTeamSizeConfigs(pool.length);
+  if (!configs.length) { toast('유효한 팀 구성이 없습니다.'); return; }
+  const cfg = configs[Math.floor(Math.random() * configs.length)];
+  selectSizeConfig(cfg.twos, cfg.threes);
 }
 function animateNext() {
   if (aniCancelled) return;
