@@ -325,7 +325,9 @@ function teamSizes(n) {
 function validTeam(team) {
   const m = team.filter(x => x.gender === 'male').length;
   const f = team.filter(x => x.gender === 'female').length;
-  return !(m === 2 && f === 1);
+  if (m === 2 && f === 1) return false; // 남2+여1 불가
+  if (m === 1 && f === 1) return false; // 남1+여1 불가
+  return true;
 }
 function generateTeams(members) {
   if (members.length < 2) throw new Error('매칭 대상이 2명 이상이어야 합니다.');
