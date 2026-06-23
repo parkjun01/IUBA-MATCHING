@@ -55,11 +55,11 @@
   <div class="admin-grid">
     <button class="admin-btn" onclick="showPage('page-required')">
       <span class="admin-icon">👥</span>
-      <span>필참 멤버 관리</span>
+      <span>고정 멤버 관리</span>
     </button>
     <button class="admin-btn" onclick="showPage('page-optional')">
       <span class="admin-icon">👤</span>
-      <span>불필참 멤버 관리</span>
+      <span>유동 멤버 관리</span>
     </button>
     <button class="admin-btn" onclick="showPage('page-venues')">
       <span class="admin-icon">📍</span>
@@ -73,32 +73,32 @@
   <button class="btn-change-pw" onclick="openChangePw()">🔒 비밀번호 변경</button>
 </div>
 
-<!-- ===== 필참 멤버 관리 ===== -->
+<!-- ===== 고정 멤버 관리 ===== -->
 <div id="page-required" class="page">
   <div class="page-header">
     <button class="btn-back" onclick="showPage('page-admin')">← 뒤로</button>
-    <h2>필참 멤버 관리</h2>
+    <h2>고정 멤버 관리</h2>
     <button class="btn btn-sm btn-primary" onclick="openMemberModal('required')">+ 추가</button>
   </div>
   <p class="page-desc">매번 전도짝 모임에 반드시 참석하는 멤버입니다. 매칭 시 자동으로 포함됩니다.</p>
   <div id="list-required" class="card-list"></div>
   <div id="empty-required" class="empty-state">
-    <p>등록된 필참 멤버가 없습니다.</p>
+    <p>등록된 고정 멤버가 없습니다.</p>
     <button class="btn btn-primary" onclick="openMemberModal('required')">첫 멤버 추가하기</button>
   </div>
 </div>
 
-<!-- ===== 불필참 멤버 관리 ===== -->
+<!-- ===== 유동 멤버 관리 ===== -->
 <div id="page-optional" class="page">
   <div class="page-header">
     <button class="btn-back" onclick="showPage('page-admin')">← 뒤로</button>
-    <h2>불필참 멤버 관리</h2>
+    <h2>유동 멤버 관리</h2>
     <button class="btn btn-sm btn-primary" onclick="openMemberModal('optional')">+ 추가</button>
   </div>
   <p class="page-desc">참석 여부가 그때그때 다른 멤버입니다. "이번 참석" 토글로 이번 회차 매칭에 포함할 수 있습니다.</p>
   <div id="list-optional" class="card-list"></div>
   <div id="empty-optional" class="empty-state">
-    <p>등록된 불필참 멤버가 없습니다.</p>
+    <p>등록된 유동 멤버가 없습니다.</p>
     <button class="btn btn-primary" onclick="openMemberModal('optional')">첫 멤버 추가하기</button>
   </div>
 </div>

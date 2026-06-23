@@ -73,10 +73,11 @@ function refreshHome() {
   }
   const venueEl = document.getElementById('home-venue-chips');
   if (!venueEl) return;
-  venueEl.innerHTML = db.venues.length === 0
+  const visibleVenues = db.venues.filter(v => !sessionHiddenVenues.has(v.id));
+  venueEl.innerHTML = visibleVenues.length === 0
     ? '<p class="home-names-empty">장소를 추가해주세요.</p>'
-    : db.venues.map(v =>
-        `<span class="name-chip name-chip-session">${esc(v.name)}${v.requiresCar ? ' 🚗' : ''}<button class="chip-rm" onclick="deleteVenue('${v.id}')">✕</button></span>`
+    : visibleVenues.map(v =>
+        `<span class="name-chip name-chip-session">${esc(v.name)}${v.requiresCar ? ' 🚗' : ''}<button class="chip-rm" onclick="hideVenueHome('${v.id}')">✕</button></span>`
       ).join('');
 }
 function removeParticipant(id) {
@@ -108,10 +109,15 @@ function startMatching() {
 function goHome() {
   sessionExcluded.clear();
   sessionIncluded.clear();
+  sessionHiddenVenues.clear();
   showPage('page-home');
 }
+function hideVenueHome(id) {
+  sessionHiddenVenues.add(id);
+  refreshHome();
+}
 // ============================================================
-// 필참 멤버
+// 고정 멤버
 // ============================================================
 function renderRequired() {
   const list = db.requiredMembers;
@@ -119,7 +125,7 @@ function renderRequired() {
   document.getElementById('list-required').innerHTML = list.map(m => memberCardHTML(m, 'required')).join('');
 }
 // ============================================================
-// 불필참 멤버
+// 유동 멤버
 // ============================================================
 function renderOptional() {
   const list = db.optionalMembers;
@@ -211,6 +217,7 @@ function esc(s) {
 // ============================================================
 const sessionExcluded = new Set();
 const sessionIncluded = new Set();
+const sessionHiddenVenues = new Set();
 function getPool() {
   const req = db.requiredMembers.filter(m => !sessionExcluded.has(m.id));
   const opt = db.optionalMembers.filter(m =>
@@ -462,11 +469,63 @@ function startAnimation() {
   const cfg = configs[Math.floor(Math.random() * configs.length)];
   selectSizeConfig(cfg.twos, cfg.threes);
 }
+// ── 효과음 (Web Audio API) ──
+let _audioCtx = null;
+function _getAC() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function playTick() {
+  try {
+    const ac = _getAC();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 600 + Math.random() * 300;
+    gain.gain.setValueAtTime(0.09, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.055);
+    osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.055);
+  } catch(e) {}
+}
+function playReveal() {
+  try {
+    const ac = _getAC();
+    [0, 0.08, 0.16].forEach((t, i) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.type = 'sine';
+      osc.frequency.value = [523, 659, 784][i];
+      gain.gain.setValueAtTime(0, ac.currentTime + t);
+      gain.gain.linearRampToValueAtTime(0.16, ac.currentTime + t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.38);
+      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + 0.38);
+    });
+  } catch(e) {}
+}
+function playComplete() {
+  try {
+    const ac = _getAC();
+    [0, 0.1, 0.2, 0.35, 0.5].forEach((t, i) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = [523, 659, 784, 1047, 1318][i];
+      gain.gain.setValueAtTime(0, ac.currentTime + t);
+      gain.gain.linearRampToValueAtTime(0.18, ac.currentTime + t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.55);
+      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + 0.55);
+    });
+  } catch(e) {}
+}
 function animateNext() {
   if (aniCancelled) return;
   if (aniIndex >= aniTeams.length) {
     document.getElementById('matching-title').textContent = '💞 매칭 완료!';
     document.getElementById('slot-area').innerHTML = '';
+    playComplete();
     launchConfetti();
     setTimeout(() => { if (!aniCancelled) showResults(); }, 2000);
     return;
@@ -540,6 +599,7 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
   const targetIdx = nameList.lastIndexOf(target);
   const finalY = -(targetIdx * REEL_ITEM_H) + (REEL_WIN_H / 2) - (REEL_ITEM_H / 2);
   let startTime = null;
+  let lastTickIdx = -1;
   function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
   function frame(ts) {
     if (aniCancelled) return;
@@ -547,9 +607,12 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
     const elapsed  = ts - startTime;
     const progress = Math.min(elapsed / duration, 1);
     const eased    = easeOutQuart(progress);
-    reel.style.transform = `translateY(${(finalY * eased).toFixed(2)}px)`;
+    const currentY = finalY * eased;
+    reel.style.transform = `translateY(${currentY.toFixed(2)}px)`;
     reel.style.filter = progress < 0.65
       ? `blur(${((1 - progress / 0.65) * 3).toFixed(1)}px)` : 'none';
+    const tickIdx = Math.floor(-currentY / REEL_ITEM_H);
+    if (tickIdx !== lastTickIdx) { lastTickIdx = tickIdx; playTick(); }
     if (progress < 1) {
       requestAnimationFrame(frame);
     } else {
@@ -564,6 +627,7 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
   requestAnimationFrame(frame);
 }
 function revealTeam({ members, venue }, no) {
+  playReveal();
   const membersHTML = members.map(m => {
     const icon = m.gender === 'male' ? '👦' : '👧';
     return `<span class="name-pill name-pill-${m.gender}">${icon} ${esc(m.name)}</span>`;
@@ -752,7 +816,7 @@ function finalizeManual() {
 // ============================================================
 function openMemberModal(type) {
   document.getElementById('modal-member-title').textContent =
-    type === 'required' ? '필참 멤버 추가' : '불필참 멤버 추가';
+    type === 'required' ? '고정 멤버 추가' : '유동 멤버 추가';
   document.getElementById('m-id').value   = '';
   document.getElementById('m-type').value = type;
   document.getElementById('m-name').value = '';
