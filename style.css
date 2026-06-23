@@ -225,22 +225,46 @@ body {
   #page-home.active {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     column-gap: 20px;
   }
   #page-home.active .home-header { grid-column: 1 / -1; grid-row: 1; padding: 16px 0 10px; }
   #page-home.active .participants-card { grid-column: 1; grid-row: 2; margin-bottom: 0; }
-  #page-home.active .home-actions { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; }
-  #page-home.active .btn-admin-entry { grid-column: 1 / -1; grid-row: 3; margin-top: 10px; }
+  #page-home.active #home-venues-card { grid-column: 1; grid-row: 3; margin-bottom: 0; margin-top: 10px; }
+  #page-home.active .home-actions { grid-column: 2; grid-row: 2 / 4; display: flex; flex-direction: column; gap: 8px; }
+  #page-home.active .btn-admin-entry { grid-column: 1 / -1; grid-row: 4; margin-top: 10px; }
 
   /* 결과 - 2열 */
   #page-results.active .results-list { columns: 2; column-gap: 14px; }
   #page-results.active .result-card,
   #page-results.active .result-divider { break-inside: avoid; }
 
-  /* 매칭 애니메이션 */
-  .matching-title { font-size: 1.2rem; margin-bottom: 14px; }
-  .teams-revealed { max-height: 50vh; }
+  /* 매칭 애니메이션 - 가로 모드: 좌=슬롯, 우=결과 */
+  #page-matching.active {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+    padding: 16px 20px;
+    gap: 0;
+  }
+  #page-matching.active .matching-title {
+    width: 100%;
+    flex: none;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+  #page-matching.active .slot-area {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+    padding-right: 16px;
+  }
+  #page-matching.active .teams-revealed {
+    flex: 1;
+    min-width: 0;
+    max-height: calc(100vh - 80px);
+  }
 }
 
 /* ── 홈 페이지 다크 테마 ── */

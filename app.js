@@ -71,6 +71,13 @@ function refreshHome() {
       `<span class="name-chip name-chip-session">${esc(m.name)}<button class="chip-rm" onclick="removeParticipant('${m.id}')">✕</button></span>`
     ).join('');
   }
+  const venueEl = document.getElementById('home-venue-chips');
+  if (!venueEl) return;
+  venueEl.innerHTML = db.venues.length === 0
+    ? '<p class="home-names-empty">장소를 추가해주세요.</p>'
+    : db.venues.map(v =>
+        `<span class="name-chip name-chip-session">${esc(v.name)}${v.requiresCar ? ' 🚗' : ''}<button class="chip-rm" onclick="deleteVenue('${v.id}')">✕</button></span>`
+      ).join('');
 }
 function removeParticipant(id) {
   sessionExcluded.add(id);
@@ -842,6 +849,7 @@ async function saveVenue(e) {
   catch(err) { toast('저장 실패. 다시 시도해주세요.'); return; }
   closeModal('modal-venue');
   renderVenues();
+  refreshHome();
   toast(id ? '수정되었습니다.' : '장소가 추가되었습니다.');
 }
 async function deleteVenue(id) {
@@ -852,6 +860,7 @@ async function deleteVenue(id) {
   try { await _deleteVenue(id); }
   catch(err) { toast('삭제 실패. 다시 시도해주세요.'); return; }
   renderVenues();
+  refreshHome();
   toast('삭제되었습니다.');
 }
 // ============================================================
