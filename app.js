@@ -835,24 +835,68 @@ function revealTeam({ members }, no) {
 function assignVenueCards(onDone) {
   const venueCount = aniTeams.filter(t => t.venue).length;
   if (!venueCount) { if (onDone) onDone(); return; }
-  document.getElementById('matching-title').textContent = '📍 장소 배치 중...';
-  const cards = document.querySelectorAll('#teams-revealed .team-chip');
-  let delay = 300;
+
+  // 타이틀 팝
+  const titleEl = document.getElementById('matching-title');
+  titleEl.classList.remove('title-pop');
+  void titleEl.offsetWidth;
+  titleEl.textContent = '📍 장소 배치!';
+  titleEl.classList.add('title-pop');
+  titleEl.addEventListener('animationend', () => titleEl.classList.remove('title-pop'), { once: true });
+
+  const container = document.getElementById('teams-revealed');
+  const cards = container.querySelectorAll('.team-chip');
+  let delay = 500;
+
   aniTeams.forEach((result, i) => {
     if (!result.venue) return;
+    const card = cards[i];
+    if (!card) return;
+
+    // 1단계: 카드 스포트라이트 (400ms)
     setTimeout(() => {
       if (aniCancelled) return;
-      const card = cards[i]; if (!card) return;
+      card.classList.add('team-chip-spotlight');
+      container.scrollTo({ top: card.offsetTop - 16, behavior: 'smooth' });
+    }, delay);
+
+    // 2단계: 장소 pill 드롭인 + 파티클 + 사운드
+    setTimeout(() => {
+      if (aniCancelled) return;
+      card.classList.remove('team-chip-spotlight');
       const pill = document.createElement('div');
       pill.className = 'venue-pill venue-pill-anim';
       pill.innerHTML = `📍 <strong>${esc(result.venue.name)}</strong>${result.venue.requiresCar ? ' 🚗' : ''}`;
       card.appendChild(pill);
-      playTick(0.25);
-      document.getElementById('teams-revealed').scrollTop = document.getElementById('teams-revealed').scrollHeight;
-    }, delay);
-    delay += 500;
+      playReveal();
+      // 장소 pill 위치에서 미니 버스트
+      requestAnimationFrame(() => {
+        const r = pill.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const colors = ['#a78bfa','#c4b5fd','#fbbf24','#34d399','#fff'];
+        for (let k = 0; k < 10; k++) {
+          const dot = document.createElement('div');
+          dot.className = 'confetti-dot';
+          const angle = (k / 10) * Math.PI * 2;
+          const dist  = 30 + Math.random() * 45;
+          const size  = 4 + Math.random() * 5;
+          dot.style.cssText = [
+            `left:${cx}px`,`top:${cy}px`,`width:${size}px`,`height:${size}px`,
+            `background:${colors[k % colors.length]}`,
+            `--dx:${Math.cos(angle)*dist}px`,`--dy:${Math.sin(angle)*dist}px`,
+            `animation:confettiFly .6s ease-out both`
+          ].join(';');
+          document.body.appendChild(dot);
+          setTimeout(() => dot.remove(), 650);
+        }
+      });
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }, delay + 420);
+
+    delay += 900;
   });
-  setTimeout(() => { if (!aniCancelled && onDone) onDone(); }, delay + 200);
+
+  setTimeout(() => { if (!aniCancelled && onDone) onDone(); }, delay + 300);
 }
 function launchConfetti() {
   const container = document.getElementById('page-matching');

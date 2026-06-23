@@ -180,12 +180,20 @@ body {
 .name-pill-male   { background: rgba(96,165,250,.28);  border: 1px solid rgba(96,165,250,.55); }
 .name-pill-female { background: rgba(244,114,182,.28); border: 1px solid rgba(244,114,182,.55); }
 .pill-sep { color: rgba(255,255,255,.4); font-size: 14px; font-weight: 700; }
-.venue-pill { margin-top: 10px; font-size: 13px; font-weight: 600; color: #fff; background: rgba(167,139,250,.28); border: 1px solid rgba(167,139,250,.5); border-radius: 8px; padding: 6px 12px; display: inline-block; }
-@keyframes venuePop {
-  from { opacity: 0; transform: scale(.85) translateY(5px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+.venue-pill { margin-top: 10px; font-size: 13px; font-weight: 600; color: #fff; background: rgba(167,139,250,.32); border: 1px solid rgba(167,139,250,.6); border-radius: 8px; padding: 7px 13px; display: inline-block; }
+@keyframes venuePinDrop {
+  0%   { opacity: 0; transform: scale(.25) translateY(-36px) rotate(-18deg); }
+  55%  { opacity: 1; transform: scale(1.18) translateY(4px)  rotate(4deg); }
+  75%  { transform: scale(.95) translateY(-2px) rotate(-2deg); }
+  90%  { transform: scale(1.04) translateY(1px)  rotate(1deg); }
+  100% { opacity: 1; transform: scale(1)   translateY(0)     rotate(0); }
 }
-.venue-pill-anim { animation: venuePop .4s cubic-bezier(.34,1.56,.64,1) both; }
+.venue-pill-anim { animation: venuePinDrop .6s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes chipSpotlight {
+  0%,100% { box-shadow: none;                          border-color: rgba(255,255,255,.20); transform: scale(1); }
+  40%      { box-shadow: 0 0 0 3px rgba(167,139,250,.7), 0 0 36px rgba(167,139,250,.5); border-color: rgba(167,139,250,.95); transform: scale(1.04); }
+}
+.team-chip-spotlight { animation: chipSpotlight .8s ease-in-out both !important; }
 .confetti-dot { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; transform: translate(-50%, -50%); }
 @keyframes confettiFly {
   0%   { opacity: 0; transform: translate(-50%,-50%) translate(0,0) scale(.5); }
