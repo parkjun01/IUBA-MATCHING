@@ -491,10 +491,9 @@ function spinReel(reel, win, nameList, target, gender, duration, onDone) {
   requestAnimationFrame(frame);
 }
 function revealTeam({ members, venue }, no) {
-  const membersHTML = members.map((m, i) => {
+  const membersHTML = members.map(m => {
     const icon = m.gender === 'male' ? '👦' : '👧';
-    const sep  = i > 0 ? `<span class="pill-sep">${i === 1 ? '♥' : '+'}</span>` : '';
-    return `${sep}<span class="name-pill name-pill-${m.gender}">${icon} ${esc(m.name)}</span>`;
+    return `<span class="name-pill name-pill-${m.gender}">${icon} ${esc(m.name)}</span>`;
   }).join('');
   const venueHTML = venue
     ? `<div class="venue-pill">📍 ${esc(venue.name)}${venue.requiresCar ? ' 🚗' : ''}</div>` : '';
