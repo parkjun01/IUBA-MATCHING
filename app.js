@@ -3,22 +3,16 @@
 // ============================================================
 const PW_KEY     = 'iuba_admin_pw';
 const PW_DEFAULT = '2014';
-
 function getAdminPw() { return localStorage.getItem(PW_KEY) || PW_DEFAULT; }
 function setAdminPw(pw) { localStorage.setItem(PW_KEY, pw); }
-
 const SUPABASE_URL = 'https://uospwzmrfaqypnwlhazd.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvc3B3em1yZmFxeXBud2xoYXpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzQxMjMsImV4cCI6MjA5NzcxMDEyM30.qszyTs4DwJSlQnWd4YUqIF27MixNQFRrnvDVD01HVaI';
 const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let db = { requiredMembers: [], optionalMembers: [], venues: [] };
-
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-
 function _fromMember(r) {
   return { id: r.id, name: r.name, gender: r.gender, role: r.role, hasCar: r.has_car, attending: r.attending };
 }
-
 async function loadDB() {
   const [{ data: mems, error: me }, { data: vens, error: ve }] = await Promise.all([
     supa.from('members').select('*').order('created_at'),
@@ -29,7 +23,6 @@ async function loadDB() {
   db.optionalMembers = (mems || []).filter(m => m.member_type === 'optional').map(_fromMember);
   db.venues = (vens || []).map(v => ({ id: v.id, name: v.name, requiresCar: v.requires_car }));
 }
-
 async function _upsertMember(member, type) {
   const { error } = await supa.from('members').upsert({
     id: member.id, name: member.name, gender: member.gender,
@@ -38,22 +31,18 @@ async function _upsertMember(member, type) {
   });
   if (error) throw error;
 }
-
 async function _deleteMember(id) {
   const { error } = await supa.from('members').delete().eq('id', id);
   if (error) throw error;
 }
-
 async function _upsertVenue(venue) {
   const { error } = await supa.from('venues').upsert({ id: venue.id, name: venue.name, requires_car: venue.requiresCar });
   if (error) throw error;
 }
-
 async function _deleteVenue(id) {
   const { error } = await supa.from('venues').delete().eq('id', id);
   if (error) throw error;
 }
-
 // ============================================================
 // 페이지 전환
 // ============================================================
@@ -68,7 +57,6 @@ function showPage(id) {
   if (id === 'page-confirm')  renderConfirm();
   if (id === 'page-manual')   renderManual();
 }
-
 // ============================================================
 // 홈
 // ============================================================
@@ -84,13 +72,11 @@ function refreshHome() {
     ).join('');
   }
 }
-
 function removeParticipant(id) {
   sessionExcluded.add(id);
   sessionIncluded.delete(id);
   refreshHome();
 }
-
 function openAddParticipant() {
   const poolIds = new Set(getPool().map(m => m.id));
   const available = [...db.requiredMembers, ...db.optionalMembers].filter(m => !poolIds.has(m.id));
@@ -100,7 +86,6 @@ function openAddParticipant() {
   ).join('');
   openModal('modal-add-participant');
 }
-
 function addParticipant(id) {
   sessionExcluded.delete(id);
   const opt = db.optionalMembers.find(m => m.id === id);
@@ -108,19 +93,16 @@ function addParticipant(id) {
   closeModal('modal-add-participant');
   refreshHome();
 }
-
 function startMatching() {
   const pool = getPool();
   if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
   showPage('page-confirm');
 }
-
 function goHome() {
   sessionExcluded.clear();
   sessionIncluded.clear();
   showPage('page-home');
 }
-
 // ============================================================
 // 필참 멤버
 // ============================================================
@@ -129,7 +111,6 @@ function renderRequired() {
   document.getElementById('empty-required').style.display = list.length ? 'none' : 'block';
   document.getElementById('list-required').innerHTML = list.map(m => memberCardHTML(m, 'required')).join('');
 }
-
 // ============================================================
 // 불필참 멤버
 // ============================================================
@@ -138,7 +119,6 @@ function renderOptional() {
   document.getElementById('empty-optional').style.display = list.length ? 'none' : 'block';
   document.getElementById('list-optional').innerHTML = list.map(m => optionalCardHTML(m)).join('');
 }
-
 async function toggleAttend(id) {
   const m = db.optionalMembers.find(x => x.id === id);
   if (!m) return;
@@ -146,7 +126,6 @@ async function toggleAttend(id) {
   try { await _upsertMember(m, 'optional'); } catch(e) { m.attending = !m.attending; toast('저장 실패'); return; }
   renderOptional(); refreshHome();
 }
-
 // ============================================================
 // 장소
 // ============================================================
@@ -155,7 +134,6 @@ function renderVenues() {
   document.getElementById('empty-venues').style.display = list.length ? 'none' : 'block';
   document.getElementById('list-venues').innerHTML = list.map(v => venueCardHTML(v)).join('');
 }
-
 // ============================================================
 // HTML 생성 헬퍼
 // ============================================================
@@ -179,7 +157,6 @@ function memberCardHTML(m, type) {
       </div>
     </div>`;
 }
-
 function optionalCardHTML(m) {
   const icon = m.gender === 'male' ? '👦' : '👧';
   const gTag = m.gender === 'male'
@@ -203,7 +180,6 @@ function optionalCardHTML(m) {
       </div>
     </div>`;
 }
-
 function venueCardHTML(v) {
   const icon = v.requiresCar ? '🚗📍' : '📍';
   const cTag = v.requiresCar ? '<span class="tag tag-car">차량 필요</span>' : '';
@@ -220,17 +196,14 @@ function venueCardHTML(v) {
       </div>
     </div>`;
 }
-
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 // ============================================================
 // 확인 페이지 + 세션 제외
 // ============================================================
-const sessionExcluded = new Set(); // 이번 회차 제외
-const sessionIncluded = new Set(); // 이번 회차 임시 추가 (불필참 중 비참석자)
-
+const sessionExcluded = new Set();
+const sessionIncluded = new Set();
 function getPool() {
   const req = db.requiredMembers.filter(m => !sessionExcluded.has(m.id));
   const opt = db.optionalMembers.filter(m =>
@@ -238,14 +211,12 @@ function getPool() {
   );
   return [...req, ...opt];
 }
-
 function getAllCandidates() {
   return [
     ...db.requiredMembers,
     ...db.optionalMembers.filter(m => m.attending)
   ];
 }
-
 function renderConfirm() {
   const all = getAllCandidates();
   document.getElementById('confirm-list').innerHTML = all.map(m => {
@@ -267,8 +238,6 @@ function renderConfirm() {
         </button>
       </div>`;
   }).join('');
-
-  // 경우의 수 계산
   const pool = getPool();
   const el   = document.getElementById('combo-count');
   if (pool.length < 2) {
@@ -288,12 +257,10 @@ function renderConfirm() {
     el.innerHTML = `<span class="combo-num">${cnt.toLocaleString()}가지</span>유효한 팀 구성 경우의 수`;
   }
 }
-
 function toggleExclude(id) {
   sessionExcluded.has(id) ? sessionExcluded.delete(id) : sessionExcluded.add(id);
   renderConfirm();
 }
-
 // ============================================================
 // 경우의 수 계산 (비트마스크 DP)
 // ============================================================
@@ -301,32 +268,16 @@ function countCombinations(members) {
   const n = members.length;
   if (n < 2) return 0;
   if (n > 16) return null;
-
   const memo = new Map();
-
-  function bits(mask) {
-    let c = 0, m = mask;
-    while (m) { c += m & 1; m >>= 1; }
-    return c;
-  }
-
+  function bits(mask) { let c = 0, m = mask; while (m) { c += m & 1; m >>= 1; } return c; }
   function dp(avail) {
     if (avail === 0) return 1;
     if (memo.has(avail)) return memo.get(avail);
-
     let first = -1;
-    for (let i = 0; i < n; i++) {
-      if (avail & (1 << i)) { first = i; break; }
-    }
-
+    for (let i = 0; i < n; i++) { if (avail & (1 << i)) { first = i; break; } }
     const others = [];
-    for (let i = first + 1; i < n; i++) {
-      if (avail & (1 << i)) others.push(i);
-    }
-
+    for (let i = first + 1; i < n; i++) { if (avail & (1 << i)) others.push(i); }
     let total = 0;
-
-    // 2인 팀
     for (let i = 0; i < others.length; i++) {
       const team = [members[first], members[others[i]]];
       if (validTeam(team)) {
@@ -335,8 +286,6 @@ function countCombinations(members) {
         if (left === 0 || left >= 2) total += dp(next);
       }
     }
-
-    // 3인 팀
     for (let i = 0; i < others.length; i++) {
       for (let j = i + 1; j < others.length; j++) {
         const team = [members[first], members[others[i]], members[others[j]]];
@@ -347,14 +296,11 @@ function countCombinations(members) {
         }
       }
     }
-
     memo.set(avail, total);
     return total;
   }
-
   return dp((1 << n) - 1);
 }
-
 // ============================================================
 // 매칭 알고리즘
 // ============================================================
@@ -366,7 +312,6 @@ function shuffle(arr) {
   }
   return a;
 }
-
 function teamSizes(n) {
   const sizes = [];
   let r = n;
@@ -377,13 +322,11 @@ function teamSizes(n) {
   }
   return sizes;
 }
-
 function validTeam(team) {
   const m = team.filter(x => x.gender === 'male').length;
   const f = team.filter(x => x.gender === 'female').length;
   return !(m === 2 && f === 1);
 }
-
 function generateTeams(members) {
   if (members.length < 2) throw new Error('매칭 대상이 2명 이상이어야 합니다.');
   for (let t = 0; t < 3000; t++) {
@@ -400,188 +343,188 @@ function generateTeams(members) {
   }
   throw new Error('유효한 팀을 구성할 수 없습니다.\n남자 2명 + 여자 1명 조합은 불가합니다.\n인원 구성을 확인해 주세요.');
 }
-
 function assignVenues(teams, venues) {
   if (!venues.length) return teams.map(t => ({ members: t, venue: null }));
-
-  const carVenues   = shuffle(venues.filter(v => v.requiresCar));
-  const freeVenues  = shuffle(venues.filter(v => !v.requiresCar));
-  const carTeams    = shuffle(teams.filter(t => t.some(m => m.hasCar)));
-  const noCarTeams  = shuffle(teams.filter(t => !t.some(m => m.hasCar)));
-
+  const carVenues  = shuffle(venues.filter(v => v.requiresCar));
+  const freeVenues = shuffle(venues.filter(v => !v.requiresCar));
+  const carTeams   = shuffle(teams.filter(t => t.some(m => m.hasCar)));
   if (carVenues.length > carTeams.length) {
     toast(`⚠️ 차량 필요 장소(${carVenues.length})가 차량 보유 팀(${carTeams.length})보다 많습니다.`);
   }
-
   const map = new Map();
   carVenues.forEach((v, i) => { if (carTeams[i]) map.set(carTeams[i], v); });
-
   const unassigned = teams.filter(t => !map.has(t));
   freeVenues.forEach((v, i) => { if (unassigned[i]) map.set(unassigned[i], v); });
-
   return teams.map(t => ({ members: t, venue: map.get(t) || null }));
 }
-
 // ============================================================
-// 애니메이션
+// 애니메이션 (슬롯머신 릴 스타일)
 // ============================================================
-let matchResult     = [];
-let _manualCount    = 0; // 직접 배정된 팀 수
-let aniTeams        = [];
-let aniIndex    = 0;
+let matchResult  = [];
+let _manualCount = 0;
+let aniTeams     = [];
+let aniIndex     = 0;
 let aniCancelled = false;
-
+const REEL_ITEM_H = 56;
+const REEL_WIN_H  = 168;
 function startAnimation() {
   const pool = getPool();
   if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
-
   let teams;
   try { teams = generateTeams(pool); }
   catch (e) { toast(e.message); return; }
-
   const result = assignVenues(teams, db.venues);
   _manualCount = 0;
   matchResult  = result;
   aniTeams     = result;
-  aniIndex    = 0;
+  aniIndex     = 0;
   aniCancelled = false;
-
   document.getElementById('teams-revealed').innerHTML = '';
   document.getElementById('slot-area').innerHTML = '';
-  document.getElementById('matching-title').textContent = '팀 구성 중...';
+  document.getElementById('matching-title').textContent = '🎯 매칭 중...';
   showPage('page-matching');
-
-  setTimeout(animateNext, 600);
+  setTimeout(animateNext, 800);
 }
-
 function animateNext() {
   if (aniCancelled) return;
   if (aniIndex >= aniTeams.length) {
-    document.getElementById('matching-title').textContent = '매칭 완료! 🎉';
-    setTimeout(() => { if (!aniCancelled) showResults(); }, 1400);
+    document.getElementById('matching-title').textContent = '💞 매칭 완료!';
+    document.getElementById('slot-area').innerHTML = '';
+    launchConfetti();
+    setTimeout(() => { if (!aniCancelled) showResults(); }, 2000);
     return;
   }
-
   const { members: team, venue } = aniTeams[aniIndex];
   const teamNo = aniIndex + 1;
-  document.getElementById('matching-title').textContent = `팀 ${teamNo} 구성 중...`;
-
+  document.getElementById('matching-title').textContent = `팀 ${teamNo} 뽑는 중...`;
+  const allNames = getPool().map(m => m.name);
+  buildSlotUI(team, allNames, () => {
+    if (aniCancelled) return;
+    revealTeam({ members: team, venue }, teamNo);
+    aniIndex++;
+    setTimeout(animateNext, 1400);
+  });
+}
+function buildSlotUI(team, allNames, onDone) {
   const slotArea = document.getElementById('slot-area');
   slotArea.innerHTML = '';
-
-  const allNames = getPool().map(m => m.name);
-
+  const row = document.createElement('div');
+  row.className = 'slot-vs-row';
+  const reelData = [];
   team.forEach((member, idx) => {
+    if (idx > 0) {
+      const sep = document.createElement('div');
+      sep.className = 'slot-sep';
+      sep.textContent = idx === 1 ? 'vs' : '+';
+      row.appendChild(sep);
+    }
     const wrap = document.createElement('div');
-    wrap.className = 'slot-wrap';
-
+    wrap.className = 'slot-reel-wrap';
     const lbl = document.createElement('div');
-    lbl.className = 'slot-label';
+    lbl.className = 'slot-member-lbl';
     lbl.textContent = `멤버 ${idx + 1}`;
-
-    const win = document.createElement('div');
-    win.className = 'slot-win';
-    win.id = `sw-${idx}`;
-
-    const scan = document.createElement('div');
-    scan.className = 'slot-scan';
-
-    const txt = document.createElement('div');
-    txt.className = 'slot-txt';
-    txt.textContent = allNames[0] || '';
-
-    win.appendChild(scan);
-    win.appendChild(txt);
     wrap.appendChild(lbl);
+    const win = document.createElement('div');
+    win.className = 'slot-reel-win';
+    const ft = document.createElement('div'); ft.className = 'slot-fade-top';
+    const fb = document.createElement('div'); fb.className = 'slot-fade-bot';
+    const cl = document.createElement('div'); cl.className = 'slot-center-line';
+    const reel = document.createElement('div');
+    reel.className = 'slot-reel';
+    const nameList = [];
+    for (let i = 0; i < 16; i++) { shuffle([...allNames]).forEach(n => nameList.push(n)); }
+    nameList.push(member.name);
+    nameList.forEach(name => {
+      const item = document.createElement('div');
+      item.className = 'slot-reel-item';
+      item.textContent = name;
+      reel.appendChild(item);
+    });
+    win.appendChild(ft); win.appendChild(fb); win.appendChild(cl); win.appendChild(reel);
     wrap.appendChild(win);
-    slotArea.appendChild(wrap);
+    row.appendChild(wrap);
+    reelData.push({ reel, win, member, nameList });
   });
-
+  slotArea.appendChild(row);
   let doneCount = 0;
-
-  team.forEach((member, idx) => {
-    const delay    = idx * 700;
-    const duration = 2200 + idx * 350;
-
+  reelData.forEach(({ reel, win, member, nameList }, idx) => {
+    const delay    = idx * 350;
+    const duration = 3200 + idx * 700;
     setTimeout(() => {
       if (aniCancelled) return;
-      const txt = document.querySelector(`#sw-${idx} .slot-txt`);
-      const win = document.getElementById(`sw-${idx}`);
-      if (!txt || !win) return;
-
-      spinSlot(txt, win, allNames, member.name, member.gender, duration, () => {
+      spinReel(reel, win, nameList, member.name, member.gender, duration, () => {
         doneCount++;
-        if (doneCount === team.length) {
-          setTimeout(() => {
-            if (aniCancelled) return;
-            revealTeam({ members: team, venue }, teamNo);
-            aniIndex++;
-            setTimeout(animateNext, 900);
-          }, 500);
-        }
+        if (doneCount === team.length && !aniCancelled) setTimeout(onDone, 500);
       });
     }, delay);
   });
 }
-
-function spinSlot(txtEl, winEl, allNames, target, gender, duration, onDone) {
-  let start = null;
-  let lastSwap = 0;
-
+function spinReel(reel, win, nameList, target, gender, duration, onDone) {
+  const targetIdx = nameList.lastIndexOf(target);
+  const finalY = -(targetIdx * REEL_ITEM_H) + (REEL_WIN_H / 2) - (REEL_ITEM_H / 2);
+  let startTime = null;
+  function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
   function frame(ts) {
     if (aniCancelled) return;
-    if (!start) start = ts;
-    const elapsed  = ts - start;
+    if (!startTime) startTime = ts;
+    const elapsed  = ts - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const speed    = Math.pow(1 - progress, 2.2);
-    const interval = 55 + (1 - speed) * 420;
-
-    if (ts - lastSwap > interval) {
-      txtEl.textContent = allNames[Math.floor(Math.random() * allNames.length)];
-      lastSwap = ts;
-    }
-
+    const eased    = easeOutQuart(progress);
+    reel.style.transform = `translateY(${(finalY * eased).toFixed(2)}px)`;
+    reel.style.filter = progress < 0.65
+      ? `blur(${((1 - progress / 0.65) * 3).toFixed(1)}px)` : 'none';
     if (progress < 1) {
       requestAnimationFrame(frame);
     } else {
-      txtEl.textContent = target;
-      // 스캔 라인 제거
-      const scanEl = winEl.querySelector('.slot-scan');
-      if (scanEl) scanEl.remove();
-      // 성별 색상 글로우
-      winEl.classList.add('glow');
-      winEl.classList.add(gender === 'male' ? 'glow-m' : 'glow-f');
+      reel.style.transform = `translateY(${finalY}px)`;
+      reel.style.filter    = 'none';
+      win.classList.add('slot-win-pop');
+      win.classList.add(gender === 'male' ? 'slot-glow-m' : 'slot-glow-f');
+      setTimeout(() => win.classList.remove('slot-win-pop'), 500);
       if (onDone) setTimeout(onDone, 320);
     }
   }
-
   requestAnimationFrame(frame);
 }
-
 function revealTeam({ members, venue }, no) {
-  const membersHTML = members.map(m => {
+  const membersHTML = members.map((m, i) => {
     const icon = m.gender === 'male' ? '👦' : '👧';
-    return `<span class="name-pill">${icon} ${esc(m.name)}</span>`;
+    const sep  = i > 0 ? `<span class="pill-sep">${i === 1 ? '♥' : '+'}</span>` : '';
+    return `${sep}<span class="name-pill name-pill-${m.gender}">${icon} ${esc(m.name)}</span>`;
   }).join('');
-
   const venueHTML = venue
-    ? `<div class="venue-pill">📍 ${esc(venue.name)}${venue.requiresCar ? ' 🚗' : ''}</div>`
-    : '';
-
+    ? `<div class="venue-pill">📍 ${esc(venue.name)}${venue.requiresCar ? ' 🚗' : ''}</div>` : '';
   const card = document.createElement('div');
   card.className = 'team-chip';
   card.innerHTML = `
-    <div class="team-chip-title">팀 ${no}</div>
+    <div class="team-chip-no">팀 ${no}</div>
     <div class="team-chip-members">${membersHTML}</div>
     ${venueHTML}`;
-
   const container = document.getElementById('teams-revealed');
   container.appendChild(card);
   container.scrollTop = container.scrollHeight;
-
+  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('team-chip-in')));
   document.getElementById('slot-area').innerHTML = '';
 }
-
+function launchConfetti() {
+  const container = document.getElementById('page-matching');
+  const colors = ['#a78bfa','#34d399','#fbbf24','#f472b6','#ffffff','#60a5fa'];
+  for (let i = 0; i < 36; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-dot';
+    const angle = Math.random() * Math.PI * 2;
+    const dist  = 80 + Math.random() * 200;
+    const size  = 7 + Math.random() * 9;
+    const delay = Math.random() * 0.5;
+    const dur   = 1.0 + Math.random() * 0.8;
+    const color = colors[i % colors.length];
+    const dx    = (Math.cos(angle) * dist).toFixed(1);
+    const dy    = (Math.sin(angle) * dist).toFixed(1);
+    el.style.cssText = `width:${size}px;height:${size}px;background:${color};left:50%;top:40%;animation:confettiFly ${dur}s ${delay}s cubic-bezier(.22,.61,.36,1) forwards;--dx:${dx}px;--dy:${dy}px;`;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), (dur + delay + 0.2) * 1000);
+  }
+}
 // ============================================================
 // 결과
 // ============================================================
@@ -589,14 +532,12 @@ function showResults() {
   showPage('page-results');
   renderResults();
 }
-
 function renderResults() {
   const hasRandom = _manualCount > 0 && matchResult.length > _manualCount;
   document.getElementById('results-list').innerHTML = matchResult.map(({ members, venue }, i) => {
     const membersHTML = members.map(m =>
       `<div class="result-member"><strong>${esc(m.name)}</strong></div>`
     ).join('');
-
     const venueHTML = venue
       ? `<button class="result-venue result-venue-btn" onclick="pickResultVenue(${i})">
            📍 <strong>${esc(venue.name)}</strong>${venue.requiresCar ? ' 🚗' : ''}
@@ -605,80 +546,56 @@ function renderResults() {
       : `<button class="result-venue result-venue-btn" onclick="pickResultVenue(${i})">
            📍 <span class="venue-unset">장소 선택 →</span>
          </button>`;
-
     const divider = (hasRandom && i === _manualCount)
       ? `<div class="result-divider">🎰 랜덤 배정</div>` : '';
-
     const badge = hasRandom
       ? (i < _manualCount ? '<span class="team-badge badge-fixed">직접</span>' : '<span class="team-badge badge-random">랜덤</span>')
       : '';
-
-    return `
-      ${divider}
-      <div class="result-card">
-        <div class="result-team-no">팀 ${i + 1} ${badge}</div>
-        <div class="result-members">${membersHTML}</div>
-        ${venueHTML}
-      </div>`;
+    return `${divider}<div class="result-card"><div class="result-team-no">팀 ${i + 1} ${badge}</div><div class="result-members">${membersHTML}</div>${venueHTML}</div>`;
   }).join('');
 }
-
 function restartMatching() {
   aniCancelled = true;
   showPage('page-confirm');
 }
-
 // ============================================================
-// 장소 픽커 (결과 페이지 + 직접 배정 공용)
+// 장소 픽커
 // ============================================================
 let _venuePick_cb = null;
-
 function openVenuePicker(callback) {
   _venuePick_cb = callback;
   const venues = [{ id: '__none__', name: '미배정', requiresCar: false }, ...db.venues];
   document.getElementById('venue-pick-list').innerHTML = venues.map(v =>
-    `<button class="pick-item" onclick="applyVenuePick('${v.id}')">
-       📍 ${esc(v.name)}${v.requiresCar ? ' 🚗' : ''}
-     </button>`
+    `<button class="pick-item" onclick="applyVenuePick('${v.id}')">📍 ${esc(v.name)}${v.requiresCar ? ' 🚗' : ''}</button>`
   ).join('');
   openModal('modal-venue-pick');
 }
-
 function applyVenuePick(venueId) {
   const venue = venueId === '__none__' ? null : db.venues.find(v => v.id === venueId) || null;
   closeModal('modal-venue-pick');
   if (_venuePick_cb) { _venuePick_cb(venue); _venuePick_cb = null; }
 }
-
 function pickResultVenue(teamIdx) {
-  openVenuePicker(venue => {
-    matchResult[teamIdx].venue = venue;
-    renderResults();
-  });
+  openVenuePicker(venue => { matchResult[teamIdx].venue = venue; renderResults(); });
 }
-
 // ============================================================
 // 직접 배정
 // ============================================================
 let manualTeams = [];
 let _memberPick_cb = null;
-
 function openManualMode() {
   const pool = getPool();
   if (pool.length < 2) { toast('매칭 대상이 2명 이상이어야 합니다.'); return; }
   manualTeams = [{ members: [], venue: null }];
   showPage('page-manual');
 }
-
 function renderManual() {
   const pool = getPool();
   const assigned = new Set(manualTeams.flatMap(t => t.members.map(m => m.id)));
   const unassigned = pool.filter(m => !assigned.has(m.id));
-
   document.getElementById('manual-pool').innerHTML = unassigned.length === 0
     ? '<span class="home-names-empty">모두 배정되었습니다.</span>'
     : unassigned.map(m => `<span class="name-chip">${esc(m.name)}</span>`).join('');
-
   document.getElementById('manual-teams').innerHTML = manualTeams.map((team, i) => {
     const membersHTML = team.members.map((m, mi) =>
       `<span class="name-chip name-chip-rm" onclick="removeManualMember(${i},${mi})">${esc(m.name)} ✕</span>`
@@ -700,17 +617,8 @@ function renderManual() {
       </div>`;
   }).join('');
 }
-
-function addManualTeam() {
-  manualTeams.push({ members: [], venue: null });
-  renderManual();
-}
-
-function removeManualTeam(i) {
-  manualTeams.splice(i, 1);
-  renderManual();
-}
-
+function addManualTeam() { manualTeams.push({ members: [], venue: null }); renderManual(); }
+function removeManualTeam(i) { manualTeams.splice(i, 1); renderManual(); }
 function pickManualMember(teamIdx) {
   const pool = getPool();
   const assigned = new Set(manualTeams.flatMap(t => t.members.map(m => m.id)));
@@ -725,57 +633,32 @@ function pickManualMember(teamIdx) {
   ).join('');
   openModal('modal-member-pick');
 }
-
 function applyMemberPick(memberId) {
   closeModal('modal-member-pick');
   if (_memberPick_cb) { _memberPick_cb(memberId); _memberPick_cb = null; }
 }
-
 function removeManualMember(teamIdx, memberIdx) {
   manualTeams[teamIdx].members.splice(memberIdx, 1);
   renderManual();
 }
-
 function pickManualVenue(teamIdx) {
-  openVenuePicker(venue => {
-    manualTeams[teamIdx].venue = venue;
-    renderManual();
-  });
+  openVenuePicker(venue => { manualTeams[teamIdx].venue = venue; renderManual(); });
 }
-
 function finalizeManual() {
-  // 빈 팀 슬롯 제거
   const fixedTeams = manualTeams.filter(t => t.members.length > 0);
-
-  // 미배정 인원 추출
   const pool = getPool();
   const assigned = new Set(fixedTeams.flatMap(t => t.members.map(m => m.id)));
   const remaining = pool.filter(m => !assigned.has(m.id));
-
-  // 미배정 1명이면 어느 팀에도 넣을 수 없으므로 막기
-  if (remaining.length === 1) {
-    toast('나머지 1명은 팀을 구성할 수 없습니다. 기존 팀에 추가해주세요.');
-    return;
-  }
-
-  // 미배정 인원 랜덤 배정
+  if (remaining.length === 1) { toast('나머지 1명은 팀을 구성할 수 없습니다. 기존 팀에 추가해주세요.'); return; }
   let randomResults = [];
   if (remaining.length >= 2) {
-    try {
-      const teams = generateTeams(remaining);
-      randomResults = assignVenues(teams, db.venues);
-    } catch(e) { toast(e.message); return; }
+    try { const teams = generateTeams(remaining); randomResults = assignVenues(teams, db.venues); }
+    catch(e) { toast(e.message); return; }
   }
-
-  // 직접 배정 팀 + 랜덤 팀 합산
   _manualCount = fixedTeams.length;
-  matchResult = [
-    ...fixedTeams.map(t => ({ members: t.members, venue: t.venue })),
-    ...randomResults,
-  ];
+  matchResult = [...fixedTeams.map(t => ({ members: t.members, venue: t.venue })), ...randomResults];
   showResults();
 }
-
 // ============================================================
 // 멤버 모달
 // ============================================================
@@ -790,7 +673,6 @@ function openMemberModal(type) {
   document.querySelectorAll('input[name="m-gender"]').forEach(r => r.checked = false);
   openModal('modal-member');
 }
-
 function openMemberEdit(id, type) {
   const list = type === 'required' ? db.requiredMembers : db.optionalMembers;
   const m = list.find(x => x.id === id);
@@ -805,7 +687,6 @@ function openMemberEdit(id, type) {
   if (radio) radio.checked = true;
   openModal('modal-member');
 }
-
 async function saveMember(e) {
   e.preventDefault();
   const id     = document.getElementById('m-id').value;
@@ -814,9 +695,7 @@ async function saveMember(e) {
   const gender = document.querySelector('input[name="m-gender"]:checked')?.value;
   const role   = document.getElementById('m-role').value;
   const hasCar = document.getElementById('m-car').checked;
-
   if (!name || !gender) { toast('이름과 성별을 입력해 주세요.'); return; }
-
   const list = type === 'required' ? db.requiredMembers : db.optionalMembers;
   let member;
   if (id) {
@@ -826,16 +705,13 @@ async function saveMember(e) {
     member = { id: genId(), name, gender, role, hasCar, attending: false };
     list.push(member);
   }
-
   try { await _upsertMember(member, type); }
   catch(err) { toast('저장 실패. 다시 시도해주세요.'); return; }
-
   closeModal('modal-member');
   if (type === 'required') renderRequired(); else renderOptional();
   refreshHome();
   toast(id ? '수정되었습니다.' : '추가되었습니다.');
 }
-
 async function deleteMember(id, type) {
   if (!confirm('정말 삭제하시겠습니까?')) return;
   const list = type === 'required' ? db.requiredMembers : db.optionalMembers;
@@ -848,7 +724,6 @@ async function deleteMember(id, type) {
   refreshHome();
   toast('삭제되었습니다.');
 }
-
 // ============================================================
 // 장소 모달
 // ============================================================
@@ -859,7 +734,6 @@ function openVenueModal() {
   document.getElementById('v-car').checked = false;
   openModal('modal-venue');
 }
-
 function openVenueEdit(id) {
   const v = db.venues.find(x => x.id === id);
   if (!v) return;
@@ -869,15 +743,12 @@ function openVenueEdit(id) {
   document.getElementById('v-car').checked = v.requiresCar;
   openModal('modal-venue');
 }
-
 async function saveVenue(e) {
   e.preventDefault();
   const id          = document.getElementById('v-id').value;
   const name        = document.getElementById('v-name').value.trim();
   const requiresCar = document.getElementById('v-car').checked;
-
   if (!name) { toast('장소명을 입력해 주세요.'); return; }
-
   let venue;
   if (id) {
     venue = db.venues.find(x => x.id === id);
@@ -886,15 +757,12 @@ async function saveVenue(e) {
     venue = { id: genId(), name, requiresCar };
     db.venues.push(venue);
   }
-
   try { await _upsertVenue(venue); }
   catch(err) { toast('저장 실패. 다시 시도해주세요.'); return; }
-
   closeModal('modal-venue');
   renderVenues();
   toast(id ? '수정되었습니다.' : '장소가 추가되었습니다.');
 }
-
 async function deleteVenue(id) {
   if (!confirm('정말 삭제하시겠습니까?')) return;
   const idx = db.venues.findIndex(v => v.id === id);
@@ -905,14 +773,12 @@ async function deleteVenue(id) {
   renderVenues();
   toast('삭제되었습니다.');
 }
-
 // ============================================================
 // 모달 유틸
 // ============================================================
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function onOverlayClick(e, id) { if (e.target === e.currentTarget) closeModal(id); }
-
 // ============================================================
 // 관리자 비밀번호
 // ============================================================
@@ -924,7 +790,6 @@ function openAdminLogin() {
   openModal('modal-admin-login');
   setTimeout(() => input.focus(), 120);
 }
-
 function submitAdminLogin(e) {
   e.preventDefault();
   const input = document.getElementById('admin-pw-input');
@@ -936,45 +801,30 @@ function submitAdminLogin(e) {
     errEl.style.display = 'block';
     input.value = '';
     input.classList.remove('shake');
-    void input.offsetWidth; // reflow for re-trigger
+    void input.offsetWidth;
     input.classList.add('shake');
     input.focus();
   }
 }
-
 function openChangePw() {
   ['cp-current','cp-new','cp-confirm'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('cp-error').style.display = 'none';
   openModal('modal-change-pw');
   setTimeout(() => document.getElementById('cp-current').focus(), 120);
 }
-
 function submitChangePw(e) {
   e.preventDefault();
   const cur  = document.getElementById('cp-current').value;
   const nw   = document.getElementById('cp-new').value;
   const conf = document.getElementById('cp-confirm').value;
   const errEl = document.getElementById('cp-error');
-  if (cur !== getAdminPw()) {
-    errEl.textContent = '현재 비밀번호가 틀렸습니다.';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (nw.length < 1) {
-    errEl.textContent = '새 비밀번호를 입력해주세요.';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (nw !== conf) {
-    errEl.textContent = '새 비밀번호가 일치하지 않습니다.';
-    errEl.style.display = 'block';
-    return;
-  }
+  if (cur !== getAdminPw()) { errEl.textContent = '현재 비밀번호가 틀렸습니다.'; errEl.style.display = 'block'; return; }
+  if (nw.length < 1) { errEl.textContent = '새 비밀번호를 입력해주세요.'; errEl.style.display = 'block'; return; }
+  if (nw !== conf) { errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; errEl.style.display = 'block'; return; }
   setAdminPw(nw);
   closeModal('modal-change-pw');
   toast('비밀번호가 변경되었습니다.');
 }
-
 // ============================================================
 // 토스트
 // ============================================================
@@ -986,7 +836,6 @@ function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
-
 // ============================================================
 // 초기화
 // ============================================================
