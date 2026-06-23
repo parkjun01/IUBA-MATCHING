@@ -478,65 +478,74 @@ function _initAC() {
 }
 function _ac() { return _audioCtx; }
 
-// 릴 스핀 틱: speed(0~1), 빠를수록 음 높고 짧음
+// 릴 스핀 틱: triangle 800→300Hz 피치드롭 (참고앱 playTick 방식)
 function playTick(speed) {
   try {
     const ac = _ac(); if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
     const osc = ac.createOscillator(), gain = ac.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(800, ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, ac.currentTime + 0.05);
+    const vol = 0.05 + speed * 0.05;
+    gain.gain.setValueAtTime(vol, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + 0.05);
     osc.connect(gain); gain.connect(ac.destination);
-    osc.type = 'square';
-    osc.frequency.value = 200 + speed * 250;
-    const dur = 0.025 + (1 - speed) * 0.03;
-    gain.gain.setValueAtTime(0.05 + speed * 0.04, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-    osc.start(ac.currentTime); osc.stop(ac.currentTime + dur);
+    osc.start(); osc.stop(ac.currentTime + 0.05);
   } catch(e) {}
 }
-// 릴 멈춤 쿵: 피치 드롭
+// 릴 멈춤 쿵: 저음 피치 드롭
 function playThud() {
   try {
     const ac = _ac(); if (!ac) return;
     const osc = ac.createOscillator(), gain = ac.createGain();
-    osc.connect(gain); gain.connect(ac.destination);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(160, ac.currentTime);
     osc.frequency.exponentialRampToValueAtTime(55, ac.currentTime + 0.14);
-    gain.gain.setValueAtTime(0.22, ac.currentTime);
+    gain.gain.setValueAtTime(0.2, ac.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.18);
-    osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.18);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.start(); osc.stop(ac.currentTime + 0.18);
   } catch(e) {}
 }
-// 팀 카드 등장: 밝은 상행 3음
+// 팀 카드 등장: sine 880Hz 긴 여운 (참고앱 playDing 방식)
 function playReveal() {
   try {
     const ac = _ac(); if (!ac) return;
-    [[0, 784], [0.09, 988], [0.18, 1175]].forEach(([t, freq]) => {
-      const osc = ac.createOscillator(), gain = ac.createGain();
-      osc.connect(gain); gain.connect(ac.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ac.currentTime + t);
-      gain.gain.linearRampToValueAtTime(0.11, ac.currentTime + t + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.42);
-      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + 0.42);
-    });
+    if (ac.state === 'suspended') ac.resume();
+    const osc = ac.createOscillator(), gain = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ac.currentTime);
+    gain.gain.setValueAtTime(0, ac.currentTime);
+    gain.gain.linearRampToValueAtTime(0.25, ac.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + 1.0);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.start(); osc.stop(ac.currentTime + 1.0);
   } catch(e) {}
 }
-// 전체 완료 팡파레: 상승 3음 + 마지막 롱
+// 전체 완료 팡파레: sine+triangle 2중 오실레이터, C-E-G-C 4음 상행 (참고앱 playTada 방식)
 function playFanfare() {
   try {
     const ac = _ac(); if (!ac) return;
-    [[0, 523, 0.5], [0.2, 659, 0.45], [0.4, 784, 0.7]].forEach(([t, freq, dur]) => {
-      const osc = ac.createOscillator(), gain = ac.createGain();
-      osc.connect(gain); gain.connect(ac.destination);
-      osc.type = 'triangle';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ac.currentTime + t);
-      gain.gain.linearRampToValueAtTime(0.15, ac.currentTime + t + 0.04);
-      gain.gain.setValueAtTime(0.15, ac.currentTime + t + dur * 0.6);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + dur);
-      osc.start(ac.currentTime + t); osc.stop(ac.currentTime + t + dur);
-    });
+    if (ac.state === 'suspended') ac.resume();
+    const osc1 = ac.createOscillator(), osc2 = ac.createOscillator(), gain = ac.createGain();
+    osc1.type = 'sine'; osc2.type = 'triangle';
+    const now = ac.currentTime;
+    osc1.frequency.setValueAtTime(523.25, now);
+    osc1.frequency.setValueAtTime(659.25, now + 0.15);
+    osc1.frequency.setValueAtTime(783.99, now + 0.30);
+    osc1.frequency.setValueAtTime(1046.50, now + 0.45);
+    osc2.frequency.setValueAtTime(261.63, now);
+    osc2.frequency.setValueAtTime(329.63, now + 0.15);
+    osc2.frequency.setValueAtTime(392.00, now + 0.30);
+    osc2.frequency.setValueAtTime(523.25, now + 0.45);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.22, now + 0.05);
+    gain.gain.setValueAtTime(0.22, now + 0.45);
+    gain.gain.linearRampToValueAtTime(0, now + 1.5);
+    osc1.connect(gain); osc2.connect(gain); gain.connect(ac.destination);
+    osc1.start(); osc2.start();
+    osc1.stop(now + 1.5); osc2.stop(now + 1.5);
   } catch(e) {}
 }
 function animateNext() {
