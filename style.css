@@ -26,7 +26,6 @@ body {
 .page-dark {
   background: linear-gradient(160deg, #080616 0%, #120a2e 60%, #0a1628 100%);
   color: #fff;
-  display: flex;
   flex-direction: column;
   align-items: center;
   padding: 40px 20px 20px;
@@ -212,35 +211,19 @@ body {
 /* ── 가로 모드 ── */
 @media (orientation: landscape) {
   body { max-width: 100%; }
-  .page { padding: 10px 24px; min-height: 100vh; }
+  .page { padding: 10px 24px; }
 
   /* 홈 - 2열 */
   #page-home {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr auto;
-    column-gap: 24px;
+    grid-template-rows: auto auto auto;
+    column-gap: 20px;
   }
-  #page-home .home-header { grid-column: 1 / -1; padding: 16px 0 10px; }
-  #page-home .home-header h1 { font-size: 1.6rem; }
-  #page-home .participants-card { grid-column: 1; grid-row: 2; margin-bottom: 0; align-self: start; }
-  #page-home .home-actions { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 10px; align-self: start; padding-top: 2px; }
-  #page-home .btn-start, #page-home .btn-manual { flex: 1; padding: 0 12px; min-height: 60px; }
+  #page-home .home-header { grid-column: 1 / -1; grid-row: 1; padding: 16px 0 10px; }
+  #page-home .participants-card { grid-column: 1; grid-row: 2; margin-bottom: 0; }
+  #page-home .home-actions { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; }
   #page-home .btn-admin-entry { grid-column: 1 / -1; grid-row: 3; margin-top: 10px; }
-
-  /* 확인 - 2열 */
-  #page-confirm {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 24px;
-    align-content: start;
-  }
-  #page-confirm .page-header,
-  #page-confirm .page-desc { grid-column: 1 / -1; }
-  #page-confirm #confirm-list { grid-column: 1; }
-  #page-confirm #combo-count { grid-column: 2; }
-  #page-confirm .btn-start { grid-column: 1 / -1; }
-  #page-confirm > div[style] { grid-column: 1 / -1; }
 
   /* 결과 - 2열 */
   #page-results .results-list { columns: 2; column-gap: 14px; }
@@ -248,16 +231,8 @@ body {
   #page-results .result-divider { break-inside: avoid; }
 
   /* 매칭 애니메이션 */
-  #page-matching { padding: 16px 24px 10px; }
-  .matching-title { font-size: 1.15rem; margin-bottom: 14px; }
-  .teams-revealed { max-height: 48vh; }
-  .slot-reel-win { height: 48px; }
-
-  /* 관리자 계열 페이지 최대 폭 */
-  #page-admin, #page-required, #page-optional, #page-venues, #page-manual {
-    max-width: 720px;
-    margin: 0 auto;
-  }
+  .matching-title { font-size: 1.2rem; margin-bottom: 14px; }
+  .teams-revealed { max-height: 50vh; }
 }
 
 /* ── 홈 페이지 다크 테마 ── */
