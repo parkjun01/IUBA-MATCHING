@@ -367,6 +367,8 @@ function _tryBuildMixed(members, threes, twos) {
   for (let i = 0; i < threes; i++) {
     if (males.length >= 1 && females.length >= 2) {
       teams.push([males.splice(0,1)[0], females.splice(0,1)[0], females.splice(0,1)[0]]);
+    } else if (males.length >= 2 && females.length >= 1) {
+      teams.push([males.splice(0,1)[0], males.splice(0,1)[0], females.splice(0,1)[0]]);
     } else if (males.length >= 3) {
       teams.push(males.splice(0, 3));
     } else if (females.length >= 3) {
@@ -421,7 +423,8 @@ function selectSizeConfig(twos, threes) {
   const pool = getPool();
   const teams = generateTeamsWithConfig(pool, twos, threes);
   if (!teams) { toast('유효한 팀을 구성할 수 없습니다. 성별 구성을 확인해주세요.'); return; }
-  const result = assignVenues(teams, db.venues);
+  const activeVenues = db.venues.filter(v => !sessionHiddenVenues.has(v.id));
+  const result = assignVenues(teams, activeVenues);
   _manualCount = 0;
   _aniOffset   = 0;
   matchResult  = result;
@@ -459,8 +462,7 @@ function teamSizes(n) {
 function validTeam(team) {
   const m = team.filter(x => x.gender === 'male').length;
   const f = team.filter(x => x.gender === 'female').length;
-  if (m === 2 && f === 1) return false; // 남2+여1 불가
-  if (m === 1 && f === 1) return false; // 남1+여1 불가
+  if (m === 1 && f === 1) return false; // 남1+여1 2인조 불가
   return true;
 }
 function generateTeams(members) {
@@ -498,7 +500,7 @@ function generateTeams(members) {
     const teams = tryBuildRandom();
     if (teams) return teams;
   }
-  throw new Error('유효한 팀을 구성할 수 없습니다.\n남자 2명 + 여자 1명 조합은 불가합니다.\n인원 구성을 확인해 주세요.');
+  throw new Error('유효한 팀을 구성할 수 없습니다.\n인원 구성을 확인해 주세요.');
 }
 function assignVenues(teams, venues) {
   if (!venues.length) return teams.map(t => ({ members: t, venue: null }));
@@ -786,12 +788,6 @@ function buildSlotUI(team, allNames, onDone) {
   row.className = 'slot-vs-row';
   const reelData = [];
   team.forEach((member, idx) => {
-    if (idx > 0) {
-      const sep = document.createElement('div');
-      sep.className = 'slot-sep';
-      sep.textContent = idx === 1 ? 'vs' : '+';
-      row.appendChild(sep);
-    }
     const wrap = document.createElement('div');
     wrap.className = 'slot-reel-wrap';
     const lbl = document.createElement('div');
@@ -1109,7 +1105,7 @@ function finalizeManual() {
   if (remaining.length === 1) { toast('나머지 1명은 팀을 구성할 수 없습니다. 기존 팀에 추가해주세요.'); return; }
   let randomResults = [];
   if (remaining.length >= 2) {
-    try { const teams = generateTeams(remaining); randomResults = assignVenues(teams, db.venues); }
+    try { const teams = generateTeams(remaining); randomResults = assignVenues(teams, db.venues.filter(v => !sessionHiddenVenues.has(v.id))); }
     catch(e) { toast(e.message); return; }
   }
   _manualCount = fixedTeams.length;
