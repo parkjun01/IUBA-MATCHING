@@ -504,8 +504,8 @@ function generateTeams(members) {
 }
 function assignVenues(teams, venues) {
   if (!venues.length) return teams.map(t => ({ members: t, venue: null }));
-  // 우선순위 순서 유지, 팀 수만큼만 사용 (초과 장소는 낮은 순위부터 제외)
-  const usedVenues = venues.slice(0, teams.length);
+  // 우선순위는 어떤 장소가 포함될지만 결정; 배정은 랜덤
+  const usedVenues = shuffle(venues.slice(0, teams.length));
   const carVenues  = usedVenues.filter(v => v.requiresCar);
   const freeVenues = usedVenues.filter(v => !v.requiresCar);
   const carTeams   = shuffle(teams.filter(t => t.some(m => m.hasCar)));
@@ -514,7 +514,7 @@ function assignVenues(teams, venues) {
   }
   const map = new Map();
   carVenues.forEach((v, i) => { if (carTeams[i]) map.set(carTeams[i], v); });
-  const unassigned = teams.filter(t => !map.has(t));
+  const unassigned = shuffle(teams.filter(t => !map.has(t)));
   freeVenues.forEach((v, i) => { if (unassigned[i]) map.set(unassigned[i], v); });
   return teams.map(t => ({ members: t, venue: map.get(t) || null }));
 }
