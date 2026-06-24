@@ -1006,6 +1006,12 @@ function renderResults() {
     return `${divider}<div class="result-card"><div class="result-team-no">팀 ${i + 1} ${badge}</div><div class="result-members">${membersHTML}</div>${venueHTML}</div>`;
   }).join('');
 }
+function skipMatching() {
+  aniCancelled = true;
+  stopBgm();
+  stopVenueBgm();
+  showResults();
+}
 function restartMatching() {
   aniCancelled = true;
   showPage('page-confirm');
