@@ -760,7 +760,6 @@ function animateNext() {
     });
     return;
   }
-  if (aniIndex === 0) startBgm();
   const { members: team, venue } = aniTeams[aniIndex];
   const teamNo = aniIndex + 1 + _aniOffset;
   const titleEl = document.getElementById('matching-title');
@@ -1117,16 +1116,14 @@ function finalizeManual() {
   _manualCount = fixedTeams.length;
   matchResult = [...fixedTeams.map(t => ({ members: t.members, venue: t.venue })), ...randomResults];
 
-  if (randomResults.length === 0) { showResults(); return; }
-
-  aniTeams     = randomResults;
+  aniTeams     = matchResult;
   aniIndex     = 0;
   aniCancelled = false;
-  _aniOffset   = _manualCount;
+  _aniOffset   = 0;
 
   document.getElementById('teams-revealed').innerHTML = '';
   document.getElementById('slot-area').innerHTML = '';
-  document.getElementById('matching-title').textContent = '🎯 나머지 랜덤 매칭 중...';
+  document.getElementById('matching-title').textContent = '🎯 매칭 중...';
   showPage('page-matching');
   setTimeout(animateNext, 800);
 }
