@@ -394,23 +394,12 @@ function generateTeamsWithConfig(members, twos, threes) {
     }
     return teams;
   }
-  const hasLeader = t => t.some(m => m.role !== '일반');
-  // 1순위: 혼성 + 각 팀 임원 1명 이상
+  // 1순위: 혼성
   for (let t = 0; t < 800; t++) {
-    const teams = _tryBuildMixed(members, threes, twos);
-    if (teams && teams.every(hasLeader)) return teams;
-  }
-  // 2순위: 혼성 (임원 분포 무관)
-  for (let t = 0; t < 400; t++) {
     const teams = _tryBuildMixed(members, threes, twos);
     if (teams) return teams;
   }
-  // 3순위: 랜덤 + 각 팀 임원 1명 이상
-  for (let t = 0; t < 1500; t++) {
-    const teams = tryBuildRandom();
-    if (teams && teams.every(hasLeader)) return teams;
-  }
-  // 4순위: 랜덤 (임원 분포 무관)
+  // 2순위: 랜덤
   for (let t = 0; t < 800; t++) {
     const teams = tryBuildRandom();
     if (teams) return teams;
@@ -479,23 +468,12 @@ function generateTeams(members) {
     }
     return teams;
   }
-  const hasLeader = t => t.some(m => m.role !== '일반');
-  // 1순위: 혼성 + 각 팀 임원 1명 이상
+  // 1순위: 혼성
   for (let t = 0; t < 800; t++) {
-    const teams = _tryBuildMixed(members, threes, twos);
-    if (teams && teams.every(hasLeader)) return teams;
-  }
-  // 2순위: 혼성 (임원 분포 무관)
-  for (let t = 0; t < 400; t++) {
     const teams = _tryBuildMixed(members, threes, twos);
     if (teams) return teams;
   }
-  // 3순위: 랜덤 + 각 팀 임원 1명 이상
-  for (let t = 0; t < 1500; t++) {
-    const teams = tryBuildRandom();
-    if (teams && teams.every(hasLeader)) return teams;
-  }
-  // 4순위: 랜덤 (임원 분포 무관)
+  // 2순위: 랜덤
   for (let t = 0; t < 800; t++) {
     const teams = tryBuildRandom();
     if (teams) return teams;
